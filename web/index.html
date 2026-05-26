@@ -22,6 +22,31 @@
   <meta name="description" content="Sunni Islamic prayer times, Qibla, and authenticated adhkar - free, open source, offline-first.">
   <meta name="theme-color" content="#1E6B52">
 
+  <!--
+    Security headers (delivered via <meta http-equiv> since GitHub Pages
+    doesn't let us set HTTP response headers).
+
+    Content-Security-Policy locks down what the page can load:
+      - default-src 'self'                — only same-origin resources
+      - script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'
+                                          — Flutter needs inline boot script
+                                            and WASM compilation for canvaskit
+      - style-src 'self' 'unsafe-inline'  — Flutter injects styles inline
+      - img-src 'self' data: blob:        — Flutter creates blob URLs for canvases
+      - font-src 'self'                   — bundled Amiri only, no external CDN
+      - connect-src 'self'                — no third-party network calls
+      - frame-ancestors 'none'            — can't be iframed (clickjacking guard)
+      - base-uri 'self'                   — locks base href
+      - form-action 'none'                — no form submissions anywhere
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; object-src 'none';">
+
+  <!-- Referrer privacy -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <!-- Disable iframing (defense in depth beyond CSP) -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+
   <!-- iOS / mobile PWA tags -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
