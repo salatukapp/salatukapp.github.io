@@ -26,20 +26,23 @@
     Security headers (delivered via <meta http-equiv> since GitHub Pages
     doesn't let us set HTTP response headers).
 
-    Content-Security-Policy locks down what the page can load:
-      - default-src 'self'                — only same-origin resources
-      - script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'
-                                          — Flutter needs inline boot script
-                                            and WASM compilation for canvaskit
-      - style-src 'self' 'unsafe-inline'  — Flutter injects styles inline
-      - img-src 'self' data: blob:        — Flutter creates blob URLs for canvases
-      - font-src 'self'                   — bundled Amiri only, no external CDN
-      - connect-src 'self'                — no third-party network calls
-      - frame-ancestors 'none'            — can't be iframed (clickjacking guard)
-      - base-uri 'self'                   — locks base href
-      - form-action 'none'                — no form submissions anywhere
+    Content-Security-Policy: locks down third-party origins. The only outside
+    origin allowed is www.gstatic.com, which Flutter uses to load CanvasKit
+    (its rendering WASM blob). No analytics, ads, fonts, or tracking servers
+    are allowed.
+
+      - default-src 'self'                       same-origin only
+      - script-src + 'wasm-unsafe-eval'          Flutter inline boot + WASM compile
+      - script-src https://www.gstatic.com       CanvasKit script
+      - connect-src https://www.gstatic.com      CanvasKit WASM fetch
+      - style-src 'unsafe-inline'                Flutter injects styles inline
+      - img-src 'self' data: blob:               Flutter blob canvases
+      - font-src 'self'                          bundled Amiri only
+      - frame-ancestors 'none'                   clickjacking guard
+      - object-src 'none'                        no plugins
+      - form-action 'none'                       no form posts anywhere
   -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; object-src 'none';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://www.gstatic.com; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; object-src 'none';">
 
   <!-- Referrer privacy -->
   <meta name="referrer" content="strict-origin-when-cross-origin">
