@@ -2,6 +2,7 @@ import 'package:adhan_dart/adhan_dart.dart' as adhan;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/notifications/notification_scheduler.dart';
 import '../../core/prayer_times/sunni_method.dart';
 import '../../core/storage/settings_store.dart';
 
@@ -77,8 +78,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('Athan notifications'),
             subtitle: const Text('Local alarms at each prayer time'),
             value: _settings.notificationsEnabled,
-            onChanged: (v) =>
-                _update(_settings.copyWith(notificationsEnabled: v)),
+            onChanged: (v) async {
+              final messenger = ScaffoldMessenger.of(context);
+              await _update(_settings.copyWith(notificationsEnabled: v));
+              final scheduled = await NotificationScheduler.reschedule();
+              if (!mounted) return;
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(v
+                      ? (scheduled > 0
+                          ? '$scheduled prayer notifications scheduled'
+                          : 'Notifications enabled — set a city to schedule them')
+                      : 'All prayer notifications cancelled'),
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            },
           ),
           ListTile(
             title: const Text('Pre-prayer reminder'),
@@ -86,6 +101,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ? 'Off'
                 : '${_settings.preNotificationMinutes} min before'),
             onTap: _pickPreReminder,
+          ),
+          ListTile(
+            leading: const Icon(Icons.notifications_active_outlined),
+            title: const Text('Send a test notification'),
+            subtitle: const Text('Confirm your phone\'s permissions are working'),
+            enabled: _settings.notificationsEnabled,
+            onTap: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final ok = await NotificationScheduler.sendTestNotification();
+              if (!mounted) return;
+              messenger.showSnackBar(SnackBar(
+                content: Text(ok
+                    ? 'Test notification sent — check your notification shade'
+                    : 'Could not send. Check Settings → Apps → Salatuk → Notifications'),
+                duration: const Duration(seconds: 3),
+              ));
+            },
           ),
           const _SectionHeader('Appearance'),
           ListTile(
@@ -161,6 +193,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     if (picked != null) {
       await _update(_settings.copyWith(method: picked, autoDetectMethod: false));
+      await NotificationScheduler.reschedule();
     }
   }
 
@@ -199,6 +232,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     if (picked != null) {
       await _update(_settings.copyWith(madhab: picked));
+      await NotificationScheduler.reschedule();
     }
   }
 
@@ -229,6 +263,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     if (picked != null) {
       await _update(_settings.copyWith(preNotificationMinutes: picked));
+      await NotificationScheduler.reschedule();
     }
   }
 

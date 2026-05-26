@@ -127,6 +127,33 @@ class PrayerNotifier {
     await init();
     await _plugin.cancelAll();
   }
+
+  /// Fires an immediate notification (no schedule). Used for the "Test
+  /// notification" button so the user can verify OS-level permissions
+  /// without waiting for the next prayer.
+  Future<void> sendTestNow() async {
+    await init();
+    const androidDetails = AndroidNotificationDetails(
+      _androidChannelId,
+      _androidChannelName,
+      channelDescription: _androidChannelDescription,
+      importance: Importance.high,
+      priority: Priority.high,
+      category: AndroidNotificationCategory.alarm,
+    );
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: false,
+      presentSound: true,
+    );
+    const details = NotificationDetails(android: androidDetails, iOS: iosDetails);
+    await _plugin.show(
+      999999, // arbitrary id outside the scheduled range
+      'Salatuk test notification',
+      'Notifications are working. Athan will fire at each prayer time.',
+      details,
+    );
+  }
 }
 
 class PendingPrayer {
