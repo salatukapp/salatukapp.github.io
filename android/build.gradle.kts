@@ -32,6 +32,10 @@ subprojects {
         if (project.name != "app") {
             plugins.withId("com.android.library") {
                 extensions.findByType(com.android.build.gradle.LibraryExtension::class.java)?.apply {
+                    // Match :app's compileSdk so transitive dependencies that
+                    // require API 34+ (e.g. androidx.fragment 1.7.x) don't fail
+                    // AAR metadata checks against plugins still on android-33.
+                    compileSdk = 36
                     compileOptions {
                         sourceCompatibility = JavaVersion.VERSION_17
                         targetCompatibility = JavaVersion.VERSION_17
