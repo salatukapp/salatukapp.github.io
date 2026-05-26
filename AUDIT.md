@@ -195,7 +195,7 @@ Recommend coupling with H1 in the same Settings section.
 **File:** `lib/core/location/region_detector.dart:28-30`
 
 The "Egypt + Sudan + Libya + Levant" box covers latitude 15-37, longitude
-24-39 and returns `muslimWorldLeague`. But the **Saudi Arabia + GCC** box
+24-39 and returns `_removed_`. But the **Saudi Arabia + GCC** box
 right above it covers latitude 16-33, longitude 34-56. Boxes overlap in
 latitude 16-33 × longitude 34-39 — this region includes western Saudi
 Arabia (Tabuk, Jeddah, Mecca) and the Hijaz. Because Saudi is checked
@@ -203,14 +203,14 @@ first (line 17), Mecca is correctly classified as Umm al-Qura.
 
 **However**, Sinai (Egypt) sits at roughly lat 28-31, lng 32-34 — *just*
 outside the Saudi box (lng > 34 required). Cairo is at 30.04, 31.24 —
-also outside (lng < 34). So Egyptians get MWL via the Levant box.
+also outside (lng < 34). So Egyptians get the regional fallback via the Levant box.
 That's a defensible choice (Egyptian method was removed), but it is
 inconsistent with §1.6 of RESEARCH.md which lists "Egypt → Egyptian (ID 5)
 default". Confirmed correct per the removal decision; document the
 deviation from RESEARCH.md.
 
 **Cyprus** (35.1°N, 33.3°E): fails the Saudi box (lng < 34), passes
-Levant box (24<lng<39, 15<lat<37). So Cyprus gets MWL — defensible.
+Levant box (24<lng<39, 15<lat<37). So Cyprus gets the regional fallback — defensible.
 However it also passes the Türkiye box (lat 35-43, lng 25-45). Türkiye is
 checked BEFORE Levant (line 22 vs 28). Result: Cyprus → Türkiye/Diyanet.
 That's borderline; Northern Cyprus is Turkish, southern Cyprus is Greek.
@@ -371,7 +371,7 @@ comment for future maintainers.
 
 **Files:** `lib/core/prayer_times/sunni_method.dart` — no Egyptian enum
 entry. `lib/core/location/region_detector.dart:25-30` — explicitly
-mentions removal and routes to MWL. Verified via grep:
+mentions removal and routes to the regional fallback. Verified via grep:
 only one match for "Egyptian" remains in lib/, in a comment explaining
 the removal. **OK.**
 

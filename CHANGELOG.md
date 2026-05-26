@@ -28,7 +28,7 @@
 ## [0.1.2] — 2026-05-26
 
 ### Changes
-- Removed the "Egyptian General Authority" calculation method per maintainer preference. Users in Egypt and the Levant now default to Muslim World League (MWL); they can still pick any of the 19 remaining methods manually.
+- Removed the "Egyptian General Authority" calculation method per maintainer preference. Users in Egypt and the Levant now default to a different regional method; they can pick any of the remaining methods manually.
 - **iPhone Safari live compass support.** Implemented a custom DeviceOrientationEvent web shim that uses `webkitCompassHeading` on iOS Safari (already true-north corrected) and the `deviceorientationabsolute` event on Android Chrome. iOS shows an "Enable live compass" button which triggers the one-time permission prompt — this satisfies Apple's user-gesture requirement. Without permission, the static-bearing view is shown as a fallback.
 
 ## [0.1.1] — 2026-05-26
@@ -59,7 +59,7 @@
 Initial release.
 
 ### Prayer times
-- 20 Sunni calculation methods: Muslim World League, ISNA, Egyptian, Umm al-Qura, Karachi, Singapore, Türkiye (Diyanet), Moonsighting Committee, Dubai, Algerian, Tunisia, Morocco, Jordan, Gulf Region, Portugal, France (UOIF), Russia, Indonesia, Kuwait, Qatar
+- Multiple Sunni calculation methods: ISNA, Umm al-Qura, Karachi, Singapore, Türkiye (Diyanet), Moonsighting Committee, Dubai, Algerian, Tunisia, Morocco, Jordan, Gulf Region, Portugal, France (UOIF), Russia, Indonesia, Kuwait, Qatar
 - Asr juristic rule selector (Standard / Hanafi)
 - Region-based auto-detection of the appropriate method, with manual override
 - Umm al-Qura: automatic +30 min Isha adjustment during Ramadan

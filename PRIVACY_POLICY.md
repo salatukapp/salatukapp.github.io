@@ -50,7 +50,7 @@ Each dhikr in the app includes its hadith source citation.
 
 ## Prayer time calculation
 
-The app uses astronomical calculation methods (Muslim World League, Umm al-Qura, ISNA, Egyptian General Authority, Karachi, Singapore, Turkey/Diyanet, etc.) recognized by major Sunni Islamic authorities. The calculation runs locally on your device — no internet connection is required after installation.
+The app uses astronomical calculation methods (Umm al-Qura, ISNA, Karachi, Singapore, Turkey/Diyanet, Moonsighting Committee, etc.) recognized by major Sunni Islamic authorities. The calculation runs locally on your device — no internet connection is required after installation.
 
 ## Changes to this policy
 
