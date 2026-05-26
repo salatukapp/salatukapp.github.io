@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.1.1] — 2026-05-26
+
+### Premium UI pass
+- New emerald + gold palette with rich dark mode
+- Hero gradient header on Prayer Times with live countdown
+- Smoother Qibla compass with low-pass filtered needle and animated rotation
+- Gradient cards on the Adhkar overview, color-coded per category
+- Animated dhikr counter with bounce feedback and haptic on tap
+- New bottom-nav with morphing icons and rounded top corners
+- Smooth page transitions between tabs
+- Polished error and loading states
+
+### Web / desktop
+- Desktop browsers now see a "designed for mobile" landing page with APK download and a copy-link button. A "continue anyway" link is available for desktop users who want to proceed.
+- Static-bearing Qibla view on browsers (no live compass needle in any browser — added an honest explanation)
+- Viewport meta tag added so iOS Safari renders at proper width
+- Hard timeout on location requests so the UI never hangs
+
+### Fixes
+- "Pick a city" fallback (28 major cities) for any location failure
+- Kotlin/Java target consistency across plugin subprojects on Android
+- Core library desugaring enabled for `flutter_local_notifications`
+
 ## [0.1.0] — 2026-05-26
 
 Initial release.

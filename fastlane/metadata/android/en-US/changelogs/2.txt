@@ -1,0 +1,12 @@
+Premium UI pass:
+• New emerald + gold theme with rich dark mode
+• Hero gradient header on Prayer Times with live countdown
+• Smooth animated Qibla compass with low-pass filtered needle
+• Color-coded gradient cards on Adhkar overview
+• Animated dhikr counter with haptic feedback
+• Polished bottom nav with morphing icons and smooth transitions
+
+Also:
+• Web/desktop redirect screen pointing users to the phone app
+• "Pick a city" fallback when GPS is unavailable
+• Stability and Android build pipeline fixes
