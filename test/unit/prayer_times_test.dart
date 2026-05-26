@@ -24,13 +24,13 @@ void main() {
 
     test('Beirut on a known summer day: prayers fall in expected hour ranges', () {
       // Sanity check against published values for Beirut, 2026-06-21 (summer solstice).
-      // Egyptian method; only checking gross order-of-magnitude correctness so the
-      // test stays robust to small algorithmic changes.
+      // Only checking gross order-of-magnitude correctness so the test stays
+      // robust to small algorithmic changes.
       final times = service.computeFor(
         latitude: 33.8938,
         longitude: 35.5018,
         date: DateTime.utc(2026, 6, 21),
-        method: SunniMethod.egyptian,
+        method: SunniMethod.muslimWorldLeague,
         madhab: adhan.Madhab.shafi,
       );
       // Local time is UTC+3 in summer; convert.

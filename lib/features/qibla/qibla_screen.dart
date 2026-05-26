@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/location/location_service.dart';
 import '../../core/qibla/qibla_service.dart';
+import '../../core/qibla/web_compass.dart';
 import '../../core/storage/settings_store.dart';
 import '../../ui/theme/app_theme.dart';
 import '../../ui/widgets/manual_location_picker.dart';
@@ -26,6 +27,8 @@ class _QiblaScreenState extends State<QiblaScreen> {
   double? _lng;
   double? _qiblaBearing;
   Stream<QiblaReading>? _stream;
+  bool _webCompassEnabled = false;
+  bool _webCompassRequesting = false;
 
   @override
   void initState() {
@@ -49,7 +52,17 @@ class _QiblaScreenState extends State<QiblaScreen> {
         _lng = loc.longitude;
       }
       _qiblaBearing = QiblaService.bearingFromTrueNorth(latitude: _lat!, longitude: _lng!);
-      _stream = _qibla.compassStream(latitude: _lat!, longitude: _lng!, date: DateTime.now());
+
+      if (!kIsWeb) {
+        // Native: stream is always live, FlutterCompass auto-subscribes.
+        _stream = _qibla.compassStream(latitude: _lat!, longitude: _lng!, date: DateTime.now());
+      } else if (!_qibla.needsWebPermission) {
+        // Web non-iOS (Android Chrome): events fire without explicit permission.
+        _stream = _qibla.webCompassStream(latitude: _lat!, longitude: _lng!, date: DateTime.now());
+        _webCompassEnabled = true;
+      }
+      // On iOS web we leave _stream null until the user taps "Enable compass".
+
       setState(() => _loading = false);
     } on LocationException catch (e) {
       setState(() {
@@ -64,6 +77,26 @@ class _QiblaScreenState extends State<QiblaScreen> {
     }
   }
 
+  Future<void> _enableWebCompass() async {
+    setState(() => _webCompassRequesting = true);
+    final granted = await WebCompass.requestPermission();
+    if (!mounted) return;
+    if (granted) {
+      setState(() {
+        _stream = _qibla.webCompassStream(latitude: _lat!, longitude: _lng!, date: DateTime.now());
+        _webCompassEnabled = true;
+        _webCompassRequesting = false;
+      });
+    } else {
+      setState(() => _webCompassRequesting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Compass permission denied. Showing static bearing only.'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -71,9 +104,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: AppTheme.heroGradient(cs, isDark: isDark)),
-        child: SafeArea(
-          child: _buildBody(),
-        ),
+        child: SafeArea(child: _buildBody()),
       ),
     );
   }
@@ -93,17 +124,39 @@ class _QiblaScreenState extends State<QiblaScreen> {
       );
     }
 
-    if (kIsWeb) {
-      return _StaticBearingView(bearing: _qiblaBearing!, latitude: _lat!, longitude: _lng!);
-    }
-    return StreamBuilder<QiblaReading>(
-      stream: _stream,
-      builder: (context, snap) => _CompassView(
+    // iOS web before user has tapped to enable: show static bearing
+    // with an "Enable live compass" button.
+    if (kIsWeb && !_webCompassEnabled) {
+      return _StaticBearingView(
         bearing: _qiblaBearing!,
-        reading: snap.data,
         latitude: _lat!,
         longitude: _lng!,
-      ),
+        showEnableButton: true,
+        enabling: _webCompassRequesting,
+        onEnable: _enableWebCompass,
+      );
+    }
+
+    return StreamBuilder<QiblaReading>(
+      stream: _stream,
+      builder: (context, snap) {
+        // On web, if no reading has arrived yet (sensor unavailable / permission
+        // dismissed), fall back to the static view instead of a spinning loader.
+        if (kIsWeb && !snap.hasData) {
+          return _StaticBearingView(
+            bearing: _qiblaBearing!,
+            latitude: _lat!,
+            longitude: _lng!,
+            showEnableButton: false,
+          );
+        }
+        return _CompassView(
+          bearing: _qiblaBearing!,
+          reading: snap.data,
+          latitude: _lat!,
+          longitude: _lng!,
+        );
+      },
     );
   }
 }
@@ -182,7 +235,7 @@ class _CompassView extends StatefulWidget {
   State<_CompassView> createState() => _CompassViewState();
 }
 
-class _CompassViewState extends State<_CompassView> with SingleTickerProviderStateMixin {
+class _CompassViewState extends State<_CompassView> {
   double _smoothedHeading = 0;
 
   @override
@@ -190,7 +243,6 @@ class _CompassViewState extends State<_CompassView> with SingleTickerProviderSta
     super.didUpdateWidget(old);
     final r = widget.reading;
     if (r != null) {
-      // Smooth heading with exponential moving average for jitter-free needle.
       var delta = r.trueHeading - _smoothedHeading;
       if (delta > 180) delta -= 360;
       if (delta < -180) delta += 360;
@@ -214,14 +266,11 @@ class _CompassViewState extends State<_CompassView> with SingleTickerProviderSta
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Column(
         children: [
-          // Top text
           Text('QIBLA',
               style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 3)),
           const SizedBox(height: 4),
-          Text(
-            '${widget.bearing.toStringAsFixed(1)}°',
-            style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w700, height: 1.1),
-          ),
+          Text('${widget.bearing.toStringAsFixed(1)}°',
+              style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w700, height: 1.1)),
           if (reading != null)
             Text(
               'Δ ${reading.deltaToQibla.toStringAsFixed(0)}°  •  heading ${reading.trueHeading.toStringAsFixed(0)}°',
@@ -238,11 +287,7 @@ class _CompassViewState extends State<_CompassView> with SingleTickerProviderSta
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     boxShadow: [
-                      BoxShadow(
-                        color: tint.withValues(alpha: 0.25),
-                        blurRadius: 60,
-                        spreadRadius: 4,
-                      ),
+                      BoxShadow(color: tint.withValues(alpha: 0.25), blurRadius: 60, spreadRadius: 4),
                     ],
                   ),
                   child: Stack(
@@ -260,7 +305,6 @@ class _CompassViewState extends State<_CompassView> with SingleTickerProviderSta
                         curve: Curves.easeOutCubic,
                         child: CustomPaint(size: Size.infinite, painter: _QiblaArrowPainter(tint)),
                       ),
-                      // Center marker
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -314,7 +358,18 @@ class _StaticBearingView extends StatelessWidget {
   final double bearing;
   final double latitude;
   final double longitude;
-  const _StaticBearingView({required this.bearing, required this.latitude, required this.longitude});
+  final bool showEnableButton;
+  final bool enabling;
+  final VoidCallback? onEnable;
+
+  const _StaticBearingView({
+    required this.bearing,
+    required this.latitude,
+    required this.longitude,
+    this.showEnableButton = false,
+    this.enabling = false,
+    this.onEnable,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -355,13 +410,32 @@ class _StaticBearingView extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
+          if (showEnableButton && onEnable != null)
+            FilledButton.icon(
+              onPressed: enabling ? null : onEnable,
+              icon: enabling
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.charcoalDeep),
+                    )
+                  : const Icon(Icons.explore_rounded),
+              label: Text(enabling ? 'Asking for permission…' : 'Enable live compass'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.gold,
+                foregroundColor: AppTheme.charcoalDeep,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+            ),
+          if (showEnableButton) const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
             ),
             child: Row(
               children: [
@@ -369,8 +443,10 @@ class _StaticBearingView extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Browsers can\'t access a compass reliably. The Android app gives you a live needle.',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13, height: 1.5),
+                    showEnableButton
+                        ? 'Your browser needs a one-time permission to read the phone\'s compass. Tap "Enable live compass" to allow it.'
+                        : 'No compass signal yet — hold the phone level and slowly rotate. If nothing happens, your browser may not support orientation events.',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12, height: 1.5),
                   ),
                 ),
               ],
@@ -395,7 +471,6 @@ class _CompassDialPainter extends CustomPainter {
     final c = size.center(Offset.zero);
     final r = size.shortestSide / 2;
 
-    // Outer ring with subtle gradient
     final ringPaint = Paint()
       ..shader = RadialGradient(
         colors: [
@@ -407,14 +482,12 @@ class _CompassDialPainter extends CustomPainter {
       ..strokeWidth = 2;
     canvas.drawCircle(c, r * 0.95, ringPaint);
 
-    // Inner ring
     final innerRing = Paint()
       ..color = Colors.white.withValues(alpha: 0.08)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     canvas.drawCircle(c, r * 0.7, innerRing);
 
-    // Cardinal marks
     final cardinals = ['N', 'E', 'S', 'W'];
     for (var i = 0; i < 4; i++) {
       final ang = -math.pi / 2 + i * math.pi / 2;
@@ -430,7 +503,6 @@ class _CompassDialPainter extends CustomPainter {
       tp.paint(canvas, pos - Offset(tp.width / 2, tp.height / 2));
     }
 
-    // Minor tick marks every 10°
     for (var deg = 0; deg < 360; deg += 10) {
       final ang = -math.pi / 2 + deg * math.pi / 180;
       final tickLen = (deg % 30 == 0) ? 0.05 : 0.025;
@@ -456,7 +528,6 @@ class _QiblaArrowPainter extends CustomPainter {
     final c = size.center(Offset.zero);
     final r = size.shortestSide / 2;
 
-    // Needle body (gold gradient)
     final path = Path()
       ..moveTo(c.dx, c.dy - r * 0.72)
       ..lineTo(c.dx - r * 0.07, c.dy - r * 0.20)
@@ -471,7 +542,6 @@ class _QiblaArrowPainter extends CustomPainter {
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
     canvas.drawPath(path, paint);
 
-    // Center dot
     final dotPaint = Paint()..color = color;
     canvas.drawCircle(c, 5, dotPaint);
     final ringPaint = Paint()

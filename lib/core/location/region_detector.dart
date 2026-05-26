@@ -23,9 +23,10 @@ class RegionDetector {
       return SunniMethod.turkiye;
     }
 
-    // Egypt + Sudan + Libya + Levant
+    // Egypt + Sudan + Libya + Levant — default to MWL since the Egyptian
+    // method was removed; users can still pick others manually in Settings.
     if (_inBox(lat, lng, latMin: 15, latMax: 37, lngMin: 24, lngMax: 39)) {
-      return SunniMethod.egyptian;
+      return SunniMethod.muslimWorldLeague;
     }
 
     // Morocco

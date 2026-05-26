@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:adhan_dart/adhan_dart.dart' as adhan;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_compass_v2/flutter_compass_v2.dart';
 
 import 'magnetic_declination.dart';
+import 'web_compass.dart';
 
 class QiblaReading {
   /// Target Qibla bearing from true north, degrees clockwise.
@@ -36,7 +38,6 @@ class QiblaReading {
 
 class QiblaService {
   /// Pure-math Qibla bearing from true north (degrees clockwise) to the Kaaba.
-  /// Uses adhan_dart's spherical-trigonometry formula. Always great-circle.
   static double bearingFromTrueNorth({
     required double latitude,
     required double longitude,
@@ -44,7 +45,7 @@ class QiblaService {
     return adhan.Qibla.qibla(adhan.Coordinates(latitude, longitude));
   }
 
-  /// Live stream of [QiblaReading]. Applies WMM magnetic-declination correction
+  /// Native-platform live compass stream. Applies WMM declination correction
   /// to convert sensor's magnetic heading to true heading.
   Stream<QiblaReading> compassStream({
     required double latitude,
@@ -58,9 +59,7 @@ class QiblaService {
       date: date,
     );
     final events = FlutterCompass.events;
-    if (events == null) {
-      return const Stream.empty();
-    }
+    if (events == null) return const Stream.empty();
     return events.map((CompassEvent event) {
       final magneticHeading = event.heading ?? 0;
       final trueHeading = _normalize(magneticHeading + declination);
@@ -75,6 +74,48 @@ class QiblaService {
       );
     });
   }
+
+  /// Browser compass stream. On iOS this requires the caller to have already
+  /// invoked [WebCompass.requestPermission] from a user-gesture handler;
+  /// otherwise no events will fire.
+  ///
+  /// On iOS the underlying `webkitCompassHeading` is already corrected to
+  /// true north — we skip declination math. On Android Chrome the `alpha`
+  /// is magnetic heading, so we apply WMM declination.
+  Stream<QiblaReading> webCompassStream({
+    required double latitude,
+    required double longitude,
+    required DateTime date,
+  }) {
+    final qibla = bearingFromTrueNorth(latitude: latitude, longitude: longitude);
+    final declination = MagneticDeclination.compute(
+      latitudeDegrees: latitude,
+      longitudeDegrees: longitude,
+      date: date,
+    );
+    // On iOS browsers, webkitCompassHeading is true heading already.
+    final bool iosLike = WebCompass.needsPermissionPrompt;
+    return WebCompass.headings().map((rawHeading) {
+      final trueHeading = iosLike
+          ? _normalize(rawHeading)
+          : _normalize(rawHeading + declination);
+      double delta = qibla - trueHeading;
+      delta = ((delta + 540) % 360) - 180;
+      return QiblaReading(
+        qiblaTrueBearing: qibla,
+        trueHeading: trueHeading,
+        deltaToQibla: delta,
+        declinationUsed: iosLike ? 0 : declination,
+      );
+    });
+  }
+
+  /// True if the current platform's compass needs an explicit user-gesture
+  /// permission prompt (iOS Safari).
+  bool get needsWebPermission => kIsWeb && WebCompass.needsPermissionPrompt;
+
+  /// True for any web platform — caller should use [webCompassStream].
+  bool get isWeb => kIsWeb;
 
   static double _normalize(double deg) {
     var d = deg % 360;

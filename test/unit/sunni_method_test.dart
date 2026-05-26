@@ -28,12 +28,6 @@ void main() {
       expect(SunniMethod.fromCode('XXX'), equals(SunniMethod.muslimWorldLeague));
     });
 
-    test('Egyptian uses 19.5°/17.5° per RESEARCH.md §5.1 resolution', () {
-      final p = SunniMethod.egyptian.toAdhanParameters();
-      expect(p.fajrAngle, 19.5);
-      expect(p.ishaAngle, 17.5);
-    });
-
     test('Umm al-Qura uses 90 min Isha interval', () {
       final p = SunniMethod.ummAlQura.toAdhanParameters();
       expect(p.fajrAngle, 18.5);

@@ -15,12 +15,6 @@ enum SunniMethod {
     arabicName: 'الجمعية الإسلامية لأمريكا الشمالية',
     summary: 'Fajr 15°, Isha 15°. Standard for North America.',
   ),
-  egyptian(
-    code: 'EGY',
-    displayName: 'Egyptian General Authority',
-    arabicName: 'الهيئة المصرية العامة للمساحة',
-    summary: 'Fajr 19.5°, Isha 17.5°. Used in Egypt and the Levant.',
-  ),
   ummAlQura(
     code: 'UAQ',
     displayName: 'Umm al-Qura (Makkah)',
@@ -143,8 +137,6 @@ enum SunniMethod {
         return adhan.CalculationMethodParameters.muslimWorldLeague();
       case SunniMethod.northAmerica:
         return adhan.CalculationMethodParameters.northAmerica();
-      case SunniMethod.egyptian:
-        return adhan.CalculationMethodParameters.egyptian();
       case SunniMethod.ummAlQura:
         return adhan.CalculationMethodParameters.ummAlQura();
       case SunniMethod.karachi:

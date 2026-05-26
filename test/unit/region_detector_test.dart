@@ -18,10 +18,10 @@ void main() {
       );
     });
 
-    test('Egypt → Egyptian', () {
+    test('Egypt → MWL (was Egyptian; method removed per user request)', () {
       expect(
         RegionDetector.recommendedMethod(latitude: 30.0444, longitude: 31.2357), // Cairo
-        equals(SunniMethod.egyptian),
+        equals(SunniMethod.muslimWorldLeague),
       );
     });
 

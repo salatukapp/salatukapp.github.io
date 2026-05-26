@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.2] — 2026-05-26
+
+### Changes
+- Removed the "Egyptian General Authority" calculation method per maintainer preference. Users in Egypt and the Levant now default to Muslim World League (MWL); they can still pick any of the 19 remaining methods manually.
+- **iPhone Safari live compass support.** Implemented a custom DeviceOrientationEvent web shim that uses `webkitCompassHeading` on iOS Safari (already true-north corrected) and the `deviceorientationabsolute` event on Android Chrome. iOS shows an "Enable live compass" button which triggers the one-time permission prompt — this satisfies Apple's user-gesture requirement. Without permission, the static-bearing view is shown as a fallback.
+
 ## [0.1.1] — 2026-05-26
 
 ### Premium UI pass
