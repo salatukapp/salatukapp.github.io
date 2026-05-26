@@ -65,13 +65,32 @@
 </head>
 <body>
   <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
+    Self-healing snippet: unregister any old Flutter service worker and
+    clear its caches. We build with --pwa-strategy=none so no new SW is
+    registered, but existing users may have a stale SW from previous
+    deploys. This runs ASAP on every visit and bypasses that.
   -->
+  <script>
+    (function() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          var hadOne = regs.length > 0;
+          regs.forEach(function(r) { r.unregister(); });
+          if ('caches' in window) {
+            caches.keys().then(function(keys) {
+              keys.forEach(function(k) { caches.delete(k); });
+            });
+          }
+          // If we just killed a stale SW, the page we're on came from its
+          // cache — reload once so we get a fresh fetch.
+          if (hadOne && !sessionStorage.getItem('_swKilled')) {
+            sessionStorage.setItem('_swKilled', '1');
+            location.reload();
+          }
+        }).catch(function() {});
+      }
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

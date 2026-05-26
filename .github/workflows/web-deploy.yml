@@ -40,7 +40,11 @@ jobs:
       - name: Build web (release)
         # Repo is named salatukapp.github.io (root user/org page),
         # so base-href is '/' instead of '/<repo>/'.
-        run: flutter build web --release --base-href=/
+        # --pwa-strategy=none disables the service worker entirely. Flutter's
+        # SW aggressively caches the app shell which has caused cache-
+        # poisoning bugs during rapid iteration. The app still works fully
+        # online; we lose offline-after-first-visit but gain reliability.
+        run: flutter build web --release --base-href=/ --pwa-strategy=none
 
       - uses: actions/upload-pages-artifact@v3
         with:

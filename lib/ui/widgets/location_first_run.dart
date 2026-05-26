@@ -33,10 +33,9 @@ class _LocationFirstRunState extends State<LocationFirstRun> {
       _error = null;
     });
     try {
-      // This is now a user-gesture-triggered call (iOS Safari friendly).
-      // 8s is long enough for cellular fixes but short enough that the user
-      // can decide to switch to manual mode if it's taking forever.
-      await _location.getCurrent(timeout: const Duration(seconds: 8));
+      // User-gesture-triggered call (iOS Safari friendly). 20 seconds gives
+      // GPS time to actually acquire a fix indoors / on slower hardware.
+      await _location.getCurrent(timeout: const Duration(seconds: 20));
       if (!mounted) return;
       widget.onReady();
     } on LocationException catch (e) {

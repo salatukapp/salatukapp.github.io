@@ -38,8 +38,12 @@ jobs:
         run: flutter test test/unit
 
       - name: Build web (release)
-        # Root-domain hosting at salatuk.web.app — base-href is '/'.
-        run: flutter build web --release --base-href=/
+        # Root-domain hosting at salatukapp.web.app — base-href is '/'.
+        # --pwa-strategy=none disables the service worker entirely. Flutter's
+        # SW aggressively caches the app shell which has caused cache-
+        # poisoning bugs during rapid iteration. We trade offline-mode for
+        # reliable cache invalidation on every deploy.
+        run: flutter build web --release --base-href=/ --pwa-strategy=none
 
       - name: Deploy to Firebase Hosting (live)
         uses: FirebaseExtended/action-hosting-deploy@v0

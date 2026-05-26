@@ -39,7 +39,7 @@ class LocationService {
   /// On the web, this must be called from a user-gesture handler (button tap)
   /// or iOS Safari will silently refuse to show the permission prompt.
   Future<LocationResult> getCurrent({
-    Duration timeout = const Duration(seconds: 10),
+    Duration timeout = const Duration(seconds: 20),
   }) async {
     final servicesEnabled = await Geolocator.isLocationServiceEnabled();
     if (!servicesEnabled) {
