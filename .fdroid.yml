@@ -1,0 +1,68 @@
+# F-Droid build metadata for Salatuk
+# https://f-droid.org/docs/Build_Metadata_Reference/
+
+Categories:
+  - Reading
+  - Time
+
+License: MIT
+AuthorName: Omar Kaaki
+AuthorEmail: omarkaaki2004@gmail.com
+WebSite: https://github.com/omarkaaki/salatuk
+SourceCode: https://github.com/omarkaaki/salatuk
+IssueTracker: https://github.com/omarkaaki/salatuk/issues
+Changelog: https://github.com/omarkaaki/salatuk/releases
+
+AutoName: Salatuk
+Summary: Sunni prayer times, Qibla, and authenticated daily adhkar
+Description: |
+    Salatuk is a free, open-source Sunni Islamic companion for daily prayers,
+    Qibla direction, and authenticated remembrances. Everything calculated
+    locally on your device, with zero data collection or tracking.
+
+    Features:
+    * Five daily prayer times with 20 Sunni calculation methods
+      (Muslim World League, ISNA, Egyptian, Umm al-Qura, Karachi,
+      Singapore, Türkiye/Diyanet, Moonsighting Committee, and more)
+    * Asr juristic rule selector (Standard / Hanafi)
+    * Region-aware default method, manual override available
+    * Qibla compass using GPS + magnetometer with magnetic-declination
+      correction
+    * 64 authenticated daily adhkar (morning, evening, after-prayer,
+      before-sleep) — all sourced from Hisn al-Muslim with primary
+      hadith citations
+    * Scheduled prayer notifications, optional pre-prayer reminder
+    * Hijri calendar
+    * Light and dark themes
+    * Works fully offline
+
+    Privacy:
+    * No data collection, no analytics, no ads
+    * No third-party SDKs that transmit usage data
+    * All calculation happens on-device
+
+RepoType: git
+Repo: https://github.com/omarkaaki/salatuk.git
+
+Builds:
+  - versionName: 0.1.0
+    versionCode: 1
+    commit: HEAD
+    subdir: .
+    sudo:
+      - apt-get update
+      - apt-get install -y openjdk-17-jdk-headless
+      - update-java-alternatives -s java-1.17.0-openjdk-amd64
+    gradle:
+      - yes
+    output: build/app/outputs/flutter-apk/app-release.apk
+    srclibs:
+      - flutter@3.44.0
+    prebuild:
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 0.1.0
+CurrentVersionCode: 1

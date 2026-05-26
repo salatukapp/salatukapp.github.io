@@ -1,0 +1,22 @@
+Salatuk is a free, open-source Sunni Islamic companion for daily prayers, Qibla direction, and authenticated remembrances.
+
+Features:
+• Five daily prayer times calculated locally on your device using astronomical methods recognized by major Sunni authorities (Muslim World League, ISNA, Egyptian, Umm al-Qura, Karachi, Singapore, Türkiye/Diyanet, Moonsighting Committee, and more)
+• Asr juristic rule selector (Standard / Hanafi)
+• Auto-detects the appropriate method for your region; manual override available
+• Qibla compass using GPS + magnetometer with magnetic-declination correction
+• Authenticated daily adhkar — 64 entries across morning, evening, after-prayer, and before-sleep, sourced from Hisn al-Muslim (Sa'id ibn Ali ibn Wahf al-Qahtani) with primary hadith citations and authentication grades
+• Scheduled prayer notifications, optional pre-prayer reminder
+• Hijri calendar
+• Light and dark themes
+
+Privacy
+• Zero data collection — nothing leaves your device
+• No analytics, no ads, no trackers, no third-party SDKs
+• Works fully offline after installation
+• Open source — code at https://github.com/omarkaaki/salatuk
+
+Religious accuracy
+Every prayer-time calculation method has been cross-verified against three independent reference implementations (Batoul Apps Adhan, PrayTimes.org, Aladhan API). Every adhkar entry includes the primary hadith citation and authentication grade. No weakly-authenticated narrations are included. See RESEARCH.md in the repository for full source documentation.
+
+Free forever. No accounts. No subscriptions. No ads.

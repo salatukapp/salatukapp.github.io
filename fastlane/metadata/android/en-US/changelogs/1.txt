@@ -1,0 +1,8 @@
+Initial release.
+
+• 5 daily prayer times with 20 Sunni calculation methods
+• Qibla compass with WMM declination correction
+• 64 authenticated daily adhkar
+• Scheduled prayer notifications
+• Hijri calendar
+• Offline-first, no data collection
