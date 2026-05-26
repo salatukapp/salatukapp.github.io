@@ -12,9 +12,17 @@ void main() {
     'Cairo': [30.0444, 31.2357],
     'KL': [3.1390, 101.6869],
     'CapeTown': [-33.9249, 18.4241],
+    'Beirut': [33.8938, 35.5018],
+    'Dubai': [25.2048, 55.2708],
+    'Riyadh': [24.7136, 46.6753],
+    'Tokyo': [35.6762, 139.6503],
+    'Lagos': [6.5244, 3.3792],
+    'Moscow': [55.7558, 37.6173],
+    'Singapore': [1.3521, 103.8198],
   };
   cities.forEach((name, c) {
     final b = Qibla.qibla(Coordinates(c[0], c[1]));
+    // ignore: avoid_print
     print('$name: ${b.toStringAsFixed(2)}');
   });
 }
