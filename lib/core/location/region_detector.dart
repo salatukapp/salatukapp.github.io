@@ -5,6 +5,10 @@ import '../prayer_times/sunni_method.dart';
 /// Uses coarse rectangular regions; the user can always override in settings.
 /// Choices are based on the established conventions documented in
 /// `RESEARCH.md` section 1.6 (Regional defaults).
+///
+/// **Order matters.** Earlier checks win — boxes are arranged so that the
+/// most specific country sits before the more generic regional box (e.g.
+/// UAE before Saudi+GCC, Tunisia before Algeria).
 class RegionDetector {
   static SunniMethod recommendedMethod({
     required double latitude,
@@ -13,7 +17,28 @@ class RegionDetector {
     final lat = latitude;
     final lng = longitude;
 
-    // Saudi Arabia + most of the GCC
+    // UAE — narrow box around 22-26°N, 51-57°E. Must come before the wider
+    // Saudi/GCC box below.
+    if (_inBox(lat, lng, latMin: 22.5, latMax: 26.5, lngMin: 51, lngMax: 57)) {
+      return SunniMethod.dubai;
+    }
+
+    // Qatar — narrow box. Before GCC.
+    if (_inBox(lat, lng, latMin: 24, latMax: 26.5, lngMin: 50, lngMax: 52)) {
+      return SunniMethod.qatar;
+    }
+
+    // Kuwait — narrow box. Before GCC.
+    if (_inBox(lat, lng, latMin: 28.5, latMax: 30.5, lngMin: 46.5, lngMax: 48.5)) {
+      return SunniMethod.kuwait;
+    }
+
+    // Jordan — narrow box. Before Egyptian/Levant.
+    if (_inBox(lat, lng, latMin: 29, latMax: 33.5, lngMin: 35, lngMax: 39)) {
+      return SunniMethod.jordan;
+    }
+
+    // Saudi Arabia (incl. most of the rest of the GCC perimeter).
     if (_inBox(lat, lng, latMin: 16, latMax: 33, lngMin: 34, lngMax: 56)) {
       return SunniMethod.ummAlQura;
     }
@@ -34,14 +59,15 @@ class RegionDetector {
       return SunniMethod.morocco;
     }
 
+    // Tunisia — MUST come before the wider Algeria box (Algeria's box
+    // extends east to lng 12 which overlaps Tunis at lng ~10).
+    if (_inBox(lat, lng, latMin: 30, latMax: 38, lngMin: 7, lngMax: 12)) {
+      return SunniMethod.tunisia;
+    }
+
     // Algeria
     if (_inBox(lat, lng, latMin: 18, latMax: 38, lngMin: -9, lngMax: 12)) {
       return SunniMethod.algerian;
-    }
-
-    // Tunisia
-    if (_inBox(lat, lng, latMin: 30, latMax: 38, lngMin: 7, lngMax: 12)) {
-      return SunniMethod.tunisia;
     }
 
     // Pakistan, India, Bangladesh, Afghanistan, Sri Lanka
@@ -49,8 +75,8 @@ class RegionDetector {
       return SunniMethod.karachi;
     }
 
-    // Singapore + immediate surroundings (check before Indonesia, which
-    // has a box that overlaps Singapore's coordinates).
+    // Singapore + immediate surroundings — must come before the wider
+    // Indonesia/Malaysia box.
     if (_inBox(lat, lng, latMin: 1, latMax: 6, lngMin: 100, lngMax: 105)) {
       return SunniMethod.singapore;
     }

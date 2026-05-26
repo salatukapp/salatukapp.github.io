@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.4] — 2026-05-26
+
+### Critical correctness fixes (all four from AUDIT.md)
+- **Replaced the broken centered-dipole declination model with the full NOAA WMM 2025 spherical-harmonic model** (degree 12, all 91 coefficient pairs). Verified against NOAA's reference calculator for 8 cities (Beirut, Riyadh, NYC, Sydney, London, Mecca, Tokyo, Jakarta) — all within ±1° of NOAA. Previous model was 10-30° off with wrong sign in many populated regions.
+- **Fixed iOS native double-declination correction.** `flutter_compass_v2` on iOS already returns `CLHeading.trueHeading` (declination-corrected); on Android it returns raw magnetic. The compass service now skips declination on iOS native and applies it only on Android, fixing a 5-20° Qibla error on iOS.
+- **Wired up prayer-time notifications.** The `PrayerNotifier.reschedule` was implemented but never called — the "Athan notifications" toggle was non-functional. Now schedules the next 7 days of prayers after every bootstrap and on app resume, capped to 6 days when pre-reminders are enabled to stay under iOS's 64-pending-notification limit.
+- **Fixed region-detector overlap bugs.** Dubai/UAE was being classified as Umm al-Qura (it now correctly returns Dubai). Tunisia was being classified as Algerian (now correctly returns Tunisia). Added narrow boxes for Qatar, Kuwait, Jordan before falling back to the wide Saudi+GCC box.
+
+### Tests
+- 51 unit tests passing (added 8 WMM declination tests against NOAA reference values for cities across 5 continents).
+
 ## [0.1.3] — 2026-05-26
 
 ### Brand + Web hosting

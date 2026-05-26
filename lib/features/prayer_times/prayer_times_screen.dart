@@ -5,8 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 import '../../core/location/location_service.dart';
 import '../../core/location/region_detector.dart';
+import '../../core/notifications/prayer_notifier.dart';
 import '../../core/prayer_times/prayer_times_service.dart';
 import '../../core/prayer_times/sunni_method.dart';
 import '../../core/storage/settings_store.dart';
@@ -20,10 +23,12 @@ class PrayerTimesScreen extends StatefulWidget {
   State<PrayerTimesScreen> createState() => _PrayerTimesScreenState();
 }
 
-class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
+class _PrayerTimesScreenState extends State<PrayerTimesScreen>
+    with WidgetsBindingObserver {
   final _location = LocationService();
   final _service = PrayerTimesService();
   final _store = SettingsStore();
+  final _notifier = PrayerNotifier();
 
   bool _loading = true;
   String? _error;
@@ -38,6 +43,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _bootstrap();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
@@ -46,8 +52,19 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _ticker?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Re-bootstrap on resume so prayer times + scheduled notifications stay
+    // fresh after the app is backgrounded (avoiding the iOS 64-notification
+    // cap drifting out of date over days).
+    if (state == AppLifecycleState.resumed && !_loading) {
+      _bootstrap();
+    }
   }
 
   Future<void> _bootstrap() async {
@@ -91,6 +108,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       _times = result.today;
       _tomorrowFajr = result.tomorrowFajr;
       setState(() => _loading = false);
+      // Fire-and-forget the notification scheduling; failures shouldn't
+      // block the UI (and web doesn't really run scheduled notifications).
+      _scheduleNotifications();
     } on LocationException catch (e) {
       setState(() {
         _loading = false;
@@ -184,6 +204,56 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   String _hijriString(DateTime d) {
     final h = HijriCalendar.fromDate(d);
     return '${h.hDay} ${h.longMonthName} ${h.hYear} AH';
+  }
+
+  /// Computes the next 7 days of prayer times and schedules a local
+  /// notification at each one. Re-run on bootstrap and on app resume.
+  /// No-op on web (browsers can't fire reliable background alarms).
+  Future<void> _scheduleNotifications() async {
+    if (kIsWeb || _lat == null || _lng == null) return;
+    if (!_settings.notificationsEnabled) {
+      await _notifier.cancelAll();
+      return;
+    }
+    final items = <PendingPrayer>[];
+    final now = DateTime.now();
+    // 7 days × 5 prayers = 35 items. With a pre-reminder doubling, ~70 items —
+    // safely under iOS's 64-pending-notification cap is impossible at
+    // doubling; cap to 6 days when pre-reminder is on.
+    final dayCount = _settings.preNotificationMinutes > 0 ? 6 : 7;
+    for (var i = 0; i < dayCount; i++) {
+      final day = now.add(Duration(days: i));
+      final t = _service.computeFor(
+        latitude: _lat!,
+        longitude: _lng!,
+        date: day,
+        method: _settings.method,
+        madhab: _settings.madhab,
+      );
+      void add(adhan.Prayer p, DateTime when, String name) {
+        if (when.isAfter(now)) {
+          items.add(PendingPrayer(
+            prayer: p,
+            when: when,
+            title: '$name prayer',
+            subtitle: 'It is time to pray $name',
+          ));
+        }
+      }
+      add(adhan.Prayer.fajr, t.fajr.toLocal(), 'Fajr');
+      add(adhan.Prayer.dhuhr, t.dhuhr.toLocal(), 'Dhuhr');
+      add(adhan.Prayer.asr, t.asr.toLocal(), 'Asr');
+      add(adhan.Prayer.maghrib, t.maghrib.toLocal(), 'Maghrib');
+      add(adhan.Prayer.isha, t.isha.toLocal(), 'Isha');
+    }
+    try {
+      await _notifier.reschedule(
+        items: items,
+        preReminderMinutes: _settings.preNotificationMinutes,
+      );
+    } catch (_) {
+      // Notification failures are not user-facing; the cards still work.
+    }
   }
 }
 

@@ -1,0 +1,8 @@
+Critical correctness fixes:
+
+• Replaced the broken dipole magnetic declination model with the full NOAA WMM 2025 — verified against NOAA for 8 cities across 5 continents. Qibla is now accurate to ±1°.
+• Fixed iOS Qibla double-correction. flutter_compass_v2 already returns true heading on iOS; we no longer add declination on top.
+• Wired up prayer-time notifications (they were silent before — the toggle now actually schedules athan alarms for the next 7 days).
+• Fixed region detector: Dubai gets Dubai method (was Umm al-Qura), Tunisia gets Tunisia method (was Algerian). Added narrow boxes for Qatar, Kuwait, Jordan.
+
+8 new tests added — 51/51 passing.

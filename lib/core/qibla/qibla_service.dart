@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:adhan_dart/adhan_dart.dart' as adhan;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter_compass_v2/flutter_compass_v2.dart';
 
 import 'magnetic_declination.dart';
@@ -45,8 +45,10 @@ class QiblaService {
     return adhan.Qibla.qibla(adhan.Coordinates(latitude, longitude));
   }
 
-  /// Native-platform live compass stream. Applies WMM declination correction
-  /// to convert sensor's magnetic heading to true heading.
+  /// Native-platform live compass stream. Applies WMM 2025 declination
+  /// correction on Android (where the sensor returns magnetic heading) but
+  /// not on iOS (where flutter_compass_v2 internally calls
+  /// `CLHeading.trueHeading` which is already true-north corrected).
   Stream<QiblaReading> compassStream({
     required double latitude,
     required double longitude,
@@ -60,16 +62,21 @@ class QiblaService {
     );
     final events = FlutterCompass.events;
     if (events == null) return const Stream.empty();
+    // iOS path: flutter_compass_v2 already returns trueHeading; do NOT add
+    // declination (verified in plugin's SwiftFlutterCompassPlugin.swift).
+    // Android path: raw magnetic azimuth — apply WMM declination.
+    final iosNative = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+    final declToApply = iosNative ? 0.0 : declination;
     return events.map((CompassEvent event) {
-      final magneticHeading = event.heading ?? 0;
-      final trueHeading = _normalize(magneticHeading + declination);
+      final rawHeading = event.heading ?? 0;
+      final trueHeading = _normalize(rawHeading + declToApply);
       double delta = qibla - trueHeading;
       delta = ((delta + 540) % 360) - 180;
       return QiblaReading(
         qiblaTrueBearing: qibla,
         trueHeading: trueHeading,
         deltaToQibla: delta,
-        declinationUsed: declination,
+        declinationUsed: declToApply,
         sensorAccuracy: event.accuracy,
       );
     });
