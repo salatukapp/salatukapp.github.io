@@ -1,13 +1,13 @@
-name: Deploy web to GitHub Pages
+name: Deploy redirect-to-firebase to GitHub Pages
+
+# GitHub Pages can't be fully disabled on a <org>.github.io repo via API,
+# so instead we deploy a tiny redirect page. Visitors to the github.io URL
+# are immediately bounced to salatukapp.web.app.
 
 on:
   push:
     branches: [main]
     paths:
-      - 'lib/**'
-      - 'web/**'
-      - 'assets/**'
-      - 'pubspec.yaml'
       - '.github/workflows/web-deploy.yml'
   workflow_dispatch:
 
@@ -24,31 +24,64 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Resolve dependencies
-        run: flutter pub get
-
-      - name: Run unit tests
-        run: flutter test test/unit
-
-      - name: Build web (release)
-        # Repo is named salatukapp.github.io (root user/org page),
-        # so base-href is '/' instead of '/<repo>/'.
-        # --pwa-strategy=none disables the service worker entirely. Flutter's
-        # SW aggressively caches the app shell which has caused cache-
-        # poisoning bugs during rapid iteration. The app still works fully
-        # online; we lose offline-after-first-visit but gain reliability.
-        run: flutter build web --release --base-href=/ --pwa-strategy=none
+      - name: Write redirect HTML
+        run: |
+          mkdir -p _site
+          cat > _site/index.html <<'HTML'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="refresh" content="0; url=https://salatukapp.web.app/">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="robots" content="noindex">
+            <link rel="canonical" href="https://salatukapp.web.app/">
+            <title>Salatuk has moved → salatukapp.web.app</title>
+            <style>
+              body {
+                margin: 0;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: linear-gradient(135deg, #0E4A37 0%, #1E6B52 60%, #1A5A45 100%);
+                color: #FBF8F1;
+                text-align: center;
+                padding: 24px;
+              }
+              .card { max-width: 460px; }
+              h1 { font-size: 38px; font-weight: 700; letter-spacing: -0.5px; margin: 0 0 8px; }
+              p { color: rgba(255,255,255,0.85); line-height: 1.6; margin: 16px 0; }
+              a {
+                display: inline-block;
+                margin-top: 16px;
+                background: #C9A961;
+                color: #14201B;
+                font-weight: 700;
+                text-decoration: none;
+                padding: 14px 28px;
+                border-radius: 14px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <h1>Salatuk</h1>
+              <p>This page has moved.<br>You'll be redirected automatically…</p>
+              <a href="https://salatukapp.web.app/">Open Salatuk →</a>
+            </div>
+            <script>location.replace('https://salatukapp.web.app/');</script>
+          </body>
+          </html>
+          HTML
+          # Also write a 404 page so any deep-link gets the same redirect.
+          cp _site/index.html _site/404.html
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: build/web
+          path: _site
 
   deploy:
     needs: build
