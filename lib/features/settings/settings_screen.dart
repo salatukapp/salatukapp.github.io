@@ -99,14 +99,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: const Text('Zero data collection. Everything stays on your device.'),
             trailing: const Icon(Icons.open_in_new),
             onTap: () => launchUrl(Uri.parse(
-                'https://github.com/omarkaaki2004/salatuk/blob/main/PRIVACY_POLICY.md')),
+                'https://github.com/omarkaaki/salatuk/blob/main/PRIVACY_POLICY.md')),
           ),
           ListTile(
             title: const Text('Source code'),
             subtitle: const Text('MIT licensed, open source on GitHub'),
             trailing: const Icon(Icons.open_in_new),
             onTap: () =>
-                launchUrl(Uri.parse('https://github.com/omarkaaki2004/salatuk')),
+                launchUrl(Uri.parse('https://github.com/omarkaaki/salatuk')),
           ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
