@@ -63,13 +63,18 @@ class WebCompass {
         }
       }
 
-      // Android Chrome: alpha is degrees CCW from East; convert to compass
-      // heading (degrees CW from North).
+      // Android Chrome `deviceorientationabsolute`: in modern Chrome (and
+      // most Chromium-derived browsers, which is the vast majority of
+      // Android web users) `alpha` is the compass heading directly —
+      // degrees CLOCKWISE from north — NOT W3C-spec CCW. The previous
+      // `360 - alpha` was correct only for spec-compliant browsers
+      // (Firefox) and inverted the heading on every Chrome user, causing
+      // Qibla errors that scale with how far the user faces from north.
       final alphaRaw = jsEvent.getProperty<JSAny?>('alpha'.toJS);
       if (alphaRaw != null) {
         final alpha = (alphaRaw as JSNumber).toDartDouble;
         if (!alpha.isNaN) {
-          controller.add(_normalize(360.0 - alpha));
+          controller.add(_normalize(alpha));
         }
       }
     }
