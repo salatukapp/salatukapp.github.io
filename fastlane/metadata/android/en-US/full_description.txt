@@ -1,7 +1,7 @@
 Salatuk is a free, open-source Sunni Islamic companion for daily prayers, Qibla direction, and authenticated remembrances.
 
 Features:
-• Five daily prayer times calculated locally on your device using astronomical methods recognized by major Sunni authorities (Muslim World League, ISNA, Egyptian, Umm al-Qura, Karachi, Singapore, Türkiye/Diyanet, Moonsighting Committee, and more)
+• Five daily prayer times calculated locally on your device using astronomical methods recognized by major Sunni authorities (ISNA, Umm al-Qura, Karachi, Singapore, Türkiye/Diyanet, Moonsighting Committee, and more)
 • Asr juristic rule selector (Standard / Hanafi)
 • Auto-detects the appropriate method for your region; manual override available
 • Qibla compass using GPS + magnetometer with magnetic-declination correction

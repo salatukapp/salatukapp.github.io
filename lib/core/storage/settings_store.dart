@@ -17,7 +17,7 @@ class Settings {
   final bool autoDetectMethod;
 
   const Settings({
-    this.method = SunniMethod.muslimWorldLeague,
+    this.method = SunniMethod.karachi,
     this.madhab = adhan.Madhab.shafi,
     this.notificationsEnabled = true,
     this.preNotificationMinutes = 0,
@@ -81,7 +81,7 @@ class SettingsStore {
     final p = await SharedPreferences.getInstance();
     return Settings(
       method: SunniMethod.fromCode(
-          p.getString(_kMethod) ?? SunniMethod.muslimWorldLeague.code),
+          p.getString(_kMethod) ?? SunniMethod.karachi.code),
       madhab: (p.getString(_kMadhab) ?? 'shafi') == 'hanafi'
           ? adhan.Madhab.hanafi
           : adhan.Madhab.shafi,

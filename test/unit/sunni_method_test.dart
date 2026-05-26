@@ -24,8 +24,8 @@ void main() {
       }
     });
 
-    test('fromCode returns MWL for unknown codes', () {
-      expect(SunniMethod.fromCode('XXX'), equals(SunniMethod.muslimWorldLeague));
+    test('fromCode returns Karachi for unknown codes', () {
+      expect(SunniMethod.fromCode('XXX'), equals(SunniMethod.karachi));
     });
 
     test('Umm al-Qura uses 90 min Isha interval', () {
@@ -38,12 +38,6 @@ void main() {
       final p = SunniMethod.karachi.toAdhanParameters();
       expect(p.fajrAngle, 18);
       expect(p.ishaAngle, 18);
-    });
-
-    test('MWL uses 18°/17°', () {
-      final p = SunniMethod.muslimWorldLeague.toAdhanParameters();
-      expect(p.fajrAngle, 18);
-      expect(p.ishaAngle, 17);
     });
   });
 }

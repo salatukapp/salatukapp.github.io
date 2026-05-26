@@ -18,10 +18,10 @@ void main() {
       );
     });
 
-    test('Egypt → MWL (was Egyptian; method removed per user request)', () {
+    test('Egypt → Karachi (regional default after removals)', () {
       expect(
         RegionDetector.recommendedMethod(latitude: 30.0444, longitude: 31.2357), // Cairo
-        equals(SunniMethod.muslimWorldLeague),
+        equals(SunniMethod.karachi),
       );
     });
 
@@ -74,10 +74,10 @@ void main() {
       );
     });
 
-    test('Pacific Ocean (no match) → MWL fallback', () {
+    test('Pacific Ocean (no match) → Karachi fallback', () {
       expect(
         RegionDetector.recommendedMethod(latitude: 0, longitude: -160),
-        equals(SunniMethod.muslimWorldLeague),
+        equals(SunniMethod.karachi),
       );
     });
   });

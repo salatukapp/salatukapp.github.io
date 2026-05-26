@@ -21,9 +21,9 @@ Description: |
     locally on your device, with zero data collection or tracking.
 
     Features:
-    * Five daily prayer times with 20 Sunni calculation methods
-      (Muslim World League, ISNA, Egyptian, Umm al-Qura, Karachi,
-      Singapore, Türkiye/Diyanet, Moonsighting Committee, and more)
+    * Five daily prayer times with multiple Sunni calculation methods
+      (ISNA, Umm al-Qura, Karachi, Singapore, Türkiye/Diyanet,
+      Moonsighting Committee, and more)
     * Asr juristic rule selector (Standard / Hanafi)
     * Region-aware default method, manual override available
     * Qibla compass using GPS + magnetometer with magnetic-declination

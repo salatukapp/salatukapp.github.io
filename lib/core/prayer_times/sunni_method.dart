@@ -3,12 +3,6 @@ import 'package:adhan_dart/adhan_dart.dart' as adhan;
 /// Sunni-recognized prayer-time calculation methods.
 /// Shia methods (Tehran, Jafari) are intentionally omitted.
 enum SunniMethod {
-  muslimWorldLeague(
-    code: 'MWL',
-    displayName: 'Muslim World League',
-    arabicName: 'رابطة العالم الإسلامي',
-    summary: 'Fajr 18°, Isha 17°. Global default; recommended for Europe and most non-regional uses.',
-  ),
   northAmerica(
     code: 'ISNA',
     displayName: 'ISNA (North America)',
@@ -133,8 +127,6 @@ enum SunniMethod {
   /// Map to adhan_dart's CalculationParameters.
   adhan.CalculationParameters toAdhanParameters() {
     switch (this) {
-      case SunniMethod.muslimWorldLeague:
-        return adhan.CalculationMethodParameters.muslimWorldLeague();
       case SunniMethod.northAmerica:
         return adhan.CalculationMethodParameters.northAmerica();
       case SunniMethod.ummAlQura:
@@ -177,7 +169,7 @@ enum SunniMethod {
   static SunniMethod fromCode(String code) {
     return SunniMethod.values.firstWhere(
       (m) => m.code == code,
-      orElse: () => SunniMethod.muslimWorldLeague,
+      orElse: () => SunniMethod.karachi,
     );
   }
 }

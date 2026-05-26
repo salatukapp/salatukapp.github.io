@@ -30,7 +30,7 @@ void main() {
         latitude: 33.8938,
         longitude: 35.5018,
         date: DateTime.utc(2026, 6, 21),
-        method: SunniMethod.muslimWorldLeague,
+        method: SunniMethod.karachi,
         madhab: adhan.Madhab.shafi,
       );
       // Local time is UTC+3 in summer; convert.
@@ -50,14 +50,14 @@ void main() {
         latitude: lat,
         longitude: lng,
         date: date,
-        method: SunniMethod.muslimWorldLeague,
+        method: SunniMethod.karachi,
         madhab: adhan.Madhab.shafi,
       );
       final hanafi = service.computeFor(
         latitude: lat,
         longitude: lng,
         date: date,
-        method: SunniMethod.muslimWorldLeague,
+        method: SunniMethod.karachi,
         madhab: adhan.Madhab.hanafi,
       );
       expect(hanafi.asr.isAfter(shafi.asr), isTrue,
@@ -68,11 +68,11 @@ void main() {
       const lat = 33.8938;
       const lng = 35.5018;
       final date = DateTime.utc(2026, 5, 26);
-      final mwl = service.computeFor(
+      final karachi = service.computeFor(
         latitude: lat,
         longitude: lng,
         date: date,
-        method: SunniMethod.muslimWorldLeague,
+        method: SunniMethod.karachi,
         madhab: adhan.Madhab.shafi,
       );
       final isna = service.computeFor(
@@ -82,8 +82,8 @@ void main() {
         method: SunniMethod.northAmerica,
         madhab: adhan.Madhab.shafi,
       );
-      // ISNA uses a shallower 15° angle than MWL's 18°, so ISNA Fajr is later.
-      expect(isna.fajr.isAfter(mwl.fajr), isTrue);
+      // ISNA uses a shallower 15° angle than Karachi's 18°, so ISNA Fajr is later.
+      expect(isna.fajr.isAfter(karachi.fajr), isTrue);
     });
 
     test('User offsets shift the prayer time', () {
@@ -94,14 +94,14 @@ void main() {
         latitude: lat,
         longitude: lng,
         date: date,
-        method: SunniMethod.muslimWorldLeague,
+        method: SunniMethod.karachi,
         madhab: adhan.Madhab.shafi,
       );
       final offset = service.computeFor(
         latitude: lat,
         longitude: lng,
         date: date,
-        method: SunniMethod.muslimWorldLeague,
+        method: SunniMethod.karachi,
         madhab: adhan.Madhab.shafi,
         userOffsetsMinutes: {adhan.Prayer.fajr: 5},
       );
