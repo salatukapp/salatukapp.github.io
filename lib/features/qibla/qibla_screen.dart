@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../core/location/location_service.dart';
 import '../../core/qibla/qibla_service.dart';
 import '../../core/storage/settings_store.dart';
+import '../../ui/theme/app_theme.dart';
 import '../../ui/widgets/manual_location_picker.dart';
 
 class QiblaScreen extends StatefulWidget {
@@ -38,7 +39,6 @@ class _QiblaScreenState extends State<QiblaScreen> {
       _error = null;
     });
     try {
-      // Honor a manual-location override first; only fall back to GPS otherwise.
       final settings = await SettingsStore().load();
       if (settings.manualLatitude != null && settings.manualLongitude != null) {
         _lat = settings.manualLatitude;
@@ -48,15 +48,8 @@ class _QiblaScreenState extends State<QiblaScreen> {
         _lat = loc.latitude;
         _lng = loc.longitude;
       }
-      _qiblaBearing = QiblaService.bearingFromTrueNorth(
-        latitude: _lat!,
-        longitude: _lng!,
-      );
-      _stream = _qibla.compassStream(
-        latitude: _lat!,
-        longitude: _lng!,
-        date: DateTime.now(),
-      );
+      _qiblaBearing = QiblaService.bearingFromTrueNorth(latitude: _lat!, longitude: _lng!);
+      _stream = _qibla.compassStream(latitude: _lat!, longitude: _lng!, date: DateTime.now());
       setState(() => _loading = false);
     } on LocationException catch (e) {
       setState(() {
@@ -73,220 +66,106 @@ class _QiblaScreenState extends State<QiblaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Qibla'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            tooltip: 'About the Qibla compass',
-            onPressed: _showInfo,
-          )
-        ],
-      ),
-      body: _buildBody(),
-    );
-  }
-
-  void _showInfo() {
-    showDialog<void>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('About this compass'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'The needle points toward the Kaaba (21.4225°N, 39.8262°E) using a great-circle calculation from your GPS location. '
-            'The compass uses your device magnetometer with World Magnetic Model declination correction to convert from magnetic to true north.\n\n'
-            'For best accuracy: hold the device flat, away from metal objects and electronics, and figure-eight to calibrate if the heading seems off. '
-            'On iOS Simulator the compass does not work — use a real device.',
-          ),
+      body: Container(
+        decoration: BoxDecoration(gradient: AppTheme.heroGradient(cs, isDark: isDark)),
+        child: SafeArea(
+          child: _buildBody(),
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
-        ],
       ),
     );
   }
 
   Widget _buildBody() {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator(color: Colors.white));
+    }
     if (_error != null) {
-      return Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.explore_off,
-                size: 64, color: Theme.of(context).colorScheme.outline),
-            const SizedBox(height: 16),
-            Text(_error!, textAlign: TextAlign.center),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () async {
-                final picked = await showManualLocationPicker(context);
-                if (picked && mounted) _bootstrap();
-              },
-              icon: const Icon(Icons.place_outlined),
-              label: const Text('Pick a city'),
-            ),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: _bootstrap,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Try GPS again'),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Desktop browsers don\'t have a magnetometer — the Qibla compass is fully accurate only on phones. On desktop you\'ll still see the target bearing.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline),
-            ),
-          ],
-        ),
+      return _ErrorState(
+        message: _error!,
+        onRetry: _bootstrap,
+        onPickCity: () async {
+          final picked = await showManualLocationPicker(context);
+          if (picked && mounted) _bootstrap();
+        },
       );
     }
-    // On web the flutter_compass_v2 plugin has no implementation, so the
-    // live compass stream never emits. Show a clear static-bearing view
-    // instead of a confusing spinning UI.
+
     if (kIsWeb) {
-      return _StaticBearingView(
-        bearing: _qiblaBearing!,
-        latitude: _lat!,
-        longitude: _lng!,
-      );
+      return _StaticBearingView(bearing: _qiblaBearing!, latitude: _lat!, longitude: _lng!);
     }
     return StreamBuilder<QiblaReading>(
       stream: _stream,
-      builder: (context, snap) {
-        final reading = snap.data;
-        return _CompassView(
-          bearing: _qiblaBearing!,
-          reading: reading,
-          latitude: _lat!,
-          longitude: _lng!,
-        );
-      },
-    );
-  }
-}
-
-/// Browser-friendly view: a fixed dial that points North and a Qibla arrow
-/// at the absolute bearing. Used on web (where browsers expose no
-/// magnetometer reliably) and as a fallback elsewhere.
-class _StaticBearingView extends StatelessWidget {
-  final double bearing;
-  final double latitude;
-  final double longitude;
-  const _StaticBearingView({
-    required this.bearing,
-    required this.latitude,
-    required this.longitude,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final qiblaRotation = bearing * math.pi / 180;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Column(
-              children: [
-                Text(
-                  '${bearing.toStringAsFixed(1)}°',
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: cs.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                Text('Qibla bearing from true north',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: SizedBox(
-              width: 280,
-              height: 280,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  CustomPaint(
-                    size: const Size.square(280),
-                    painter: _CompassDialPainter(cs),
-                  ),
-                  Transform.rotate(
-                    angle: qiblaRotation,
-                    child: CustomPaint(
-                      size: const Size.square(280),
-                      painter: _QiblaArrowPainter(cs.primary),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: cs.secondaryContainer,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Icon(Icons.info_outline,
-                      size: 18, color: cs.onSecondaryContainer),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Live compass unavailable in browser',
-                    style: TextStyle(
-                      color: cs.onSecondaryContainer,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ]),
-                const SizedBox(height: 8),
-                Text(
-                  'Browsers do not expose a reliable magnetometer to web pages. '
-                  'The diagram above shows the Qibla bearing from true north — '
-                  'face north (use a real compass or your phone\'s native compass app), '
-                  'then turn ${bearing.toStringAsFixed(0)}° clockwise.\n\n'
-                  'For a live compass that follows your phone, install the Android app from '
-                  'github.com/omarkaaki/salatuk/releases.',
-                  style: TextStyle(
-                    color: cs.onSecondaryContainer,
-                    fontSize: 13,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: Text(
-              'Location: ${latitude.toStringAsFixed(2)}°, ${longitude.toStringAsFixed(2)}°',
-              style: Theme.of(context)
-                  .textTheme
-                  .labelSmall
-                  ?.copyWith(color: cs.outline),
-            ),
-          ),
-        ],
+      builder: (context, snap) => _CompassView(
+        bearing: _qiblaBearing!,
+        reading: snap.data,
+        latitude: _lat!,
+        longitude: _lng!,
       ),
     );
   }
 }
 
-class _CompassView extends StatelessWidget {
+class _ErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  final VoidCallback onPickCity;
+  const _ErrorState({required this.message, required this.onRetry, required this.onPickCity});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.explore_off, size: 56, color: Colors.white70),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Qibla unavailable',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.75), height: 1.5)),
+            const SizedBox(height: 32),
+            FilledButton.icon(
+              onPressed: onPickCity,
+              icon: const Icon(Icons.place_outlined),
+              label: const Text('Pick a city'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.gold,
+                foregroundColor: AppTheme.charcoalDeep,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh, color: Colors.white70),
+              label: const Text('Try GPS again', style: TextStyle(color: Colors.white70)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CompassView extends StatefulWidget {
   final double bearing;
   final QiblaReading? reading;
   final double latitude;
@@ -300,93 +179,130 @@ class _CompassView extends StatelessWidget {
   });
 
   @override
+  State<_CompassView> createState() => _CompassViewState();
+}
+
+class _CompassViewState extends State<_CompassView> with SingleTickerProviderStateMixin {
+  double _smoothedHeading = 0;
+
+  @override
+  void didUpdateWidget(_CompassView old) {
+    super.didUpdateWidget(old);
+    final r = widget.reading;
+    if (r != null) {
+      // Smooth heading with exponential moving average for jitter-free needle.
+      var delta = r.trueHeading - _smoothedHeading;
+      if (delta > 180) delta -= 360;
+      if (delta < -180) delta += 360;
+      _smoothedHeading = (_smoothedHeading + delta * 0.25) % 360;
+      if (_smoothedHeading < 0) _smoothedHeading += 360;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final reading = widget.reading;
     final isFacing = reading?.isFacingQibla ?? false;
     final isNear = reading?.isNearQibla ?? false;
-    final tint = isFacing
-        ? Colors.green
-        : isNear
-            ? Colors.amber
-            : cs.primary;
+    final tint = isFacing ? const Color(0xFF6BE89F) : (isNear ? AppTheme.goldSoft : Colors.white);
 
-    // Rotation: rotate compass face by negative heading so the heading marker points up.
-    final heading = reading?.trueHeading ?? 0;
+    final heading = reading != null ? _smoothedHeading : 0.0;
     final rotation = -heading * math.pi / 180;
-    final qiblaRotation = (bearing - heading) * math.pi / 180;
+    final qiblaRotation = (widget.bearing - heading) * math.pi / 180;
 
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Column(
         children: [
+          // Top text
+          Text('QIBLA',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 3)),
+          const SizedBox(height: 4),
           Text(
-            'Qibla bearing: ${bearing.toStringAsFixed(1)}° from true north',
-            style: Theme.of(context).textTheme.bodyMedium,
+            '${widget.bearing.toStringAsFixed(1)}°',
+            style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w700, height: 1.1),
           ),
-          if (reading != null) ...[
-            const SizedBox(height: 4),
+          if (reading != null)
             Text(
-              'Heading ${reading!.trueHeading.toStringAsFixed(0)}°  •  '
-              'Δ ${reading!.deltaToQibla.toStringAsFixed(0)}°',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.outline),
+              'Δ ${reading.deltaToQibla.toStringAsFixed(0)}°  •  heading ${reading.trueHeading.toStringAsFixed(0)}°',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
             ),
-          ],
           const SizedBox(height: 24),
           Expanded(
             child: Center(
               child: AspectRatio(
                 aspectRatio: 1,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Compass dial
-                    Transform.rotate(
-                      angle: rotation,
-                      child: CustomPaint(
-                        size: Size.infinite,
-                        painter: _CompassDialPainter(cs),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeOutCubic,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: tint.withValues(alpha: 0.25),
+                        blurRadius: 60,
+                        spreadRadius: 4,
                       ),
-                    ),
-                    // Qibla needle relative to current heading
-                    Transform.rotate(
-                      angle: qiblaRotation,
-                      child: CustomPaint(
-                        size: Size.infinite,
-                        painter: _QiblaArrowPainter(tint),
+                    ],
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      AnimatedRotation(
+                        turns: rotation / (2 * math.pi),
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeOutCubic,
+                        child: CustomPaint(size: Size.infinite, painter: _CompassDialPainter()),
                       ),
-                    ),
-                    // Status text in center
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isFacing ? Icons.check_circle : Icons.navigation,
-                          size: 36,
-                          color: tint,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          isFacing
-                              ? 'Facing Qibla'
-                              : isNear
-                                  ? 'Almost there'
-                                  : 'Turn ${reading?.deltaToQibla.abs().toStringAsFixed(0) ?? "--"}°'
-                                      '${(reading?.deltaToQibla ?? 0) > 0 ? " →" : " ←"}',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ],
-                    ),
-                  ],
+                      AnimatedRotation(
+                        turns: qiblaRotation / (2 * math.pi),
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeOutCubic,
+                        child: CustomPaint(size: Size.infinite, painter: _QiblaArrowPainter(tint)),
+                      ),
+                      // Center marker
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 250),
+                            child: Icon(
+                              isFacing ? Icons.check_circle : Icons.navigation_rounded,
+                              key: ValueKey(isFacing),
+                              size: 40,
+                              color: tint,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            isFacing
+                                ? 'Facing Qibla'
+                                : isNear
+                                    ? 'Almost there'
+                                    : 'Turn ${reading?.deltaToQibla.abs().toStringAsFixed(0) ?? "--"}°'
+                                        '${(reading?.deltaToQibla ?? 0) > 0 ? " →" : " ←"}',
+                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
           const SizedBox(height: 16),
           if (reading != null)
-            Text(
-              'Declination ${reading!.declinationUsed.toStringAsFixed(1)}°  •  '
-              'GPS ${latitude.toStringAsFixed(2)}, ${longitude.toStringAsFixed(2)}',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: cs.outline),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'Declination ${reading.declinationUsed.toStringAsFixed(1)}° • GPS ${widget.latitude.toStringAsFixed(2)}, ${widget.longitude.toStringAsFixed(2)}',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11),
+              ),
             ),
         ],
       ),
@@ -394,45 +310,135 @@ class _CompassView extends StatelessWidget {
   }
 }
 
-class _CompassDialPainter extends CustomPainter {
-  final ColorScheme cs;
-  _CompassDialPainter(this.cs);
+class _StaticBearingView extends StatelessWidget {
+  final double bearing;
+  final double latitude;
+  final double longitude;
+  const _StaticBearingView({required this.bearing, required this.latitude, required this.longitude});
 
+  @override
+  Widget build(BuildContext context) {
+    final qiblaRotation = bearing * math.pi / 180;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Column(
+              children: [
+                Text('QIBLA',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 3)),
+                const SizedBox(height: 4),
+                Text('${bearing.toStringAsFixed(1)}°',
+                    style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.w700, height: 1.1)),
+                const SizedBox(height: 4),
+                Text('from true north',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Center(
+            child: SizedBox(
+              width: 280,
+              height: 280,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CustomPaint(size: const Size.square(280), painter: _CompassDialPainter()),
+                  Transform.rotate(
+                    angle: qiblaRotation,
+                    child: CustomPaint(size: const Size.square(280), painter: _QiblaArrowPainter(AppTheme.gold)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 18, color: AppTheme.goldSoft),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Browsers can\'t access a compass reliably. The Android app gives you a live needle.',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13, height: 1.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: Text(
+              'Location: ${latitude.toStringAsFixed(2)}°, ${longitude.toStringAsFixed(2)}°',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompassDialPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final c = size.center(Offset.zero);
     final r = size.shortestSide / 2;
 
+    // Outer ring with subtle gradient
     final ringPaint = Paint()
-      ..color = cs.outlineVariant
+      ..shader = RadialGradient(
+        colors: [
+          Colors.white.withValues(alpha: 0.0),
+          Colors.white.withValues(alpha: 0.15),
+        ],
+      ).createShader(Rect.fromCircle(center: c, radius: r))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+      ..strokeWidth = 2;
     canvas.drawCircle(c, r * 0.95, ringPaint);
 
+    // Inner ring
+    final innerRing = Paint()
+      ..color = Colors.white.withValues(alpha: 0.08)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    canvas.drawCircle(c, r * 0.7, innerRing);
+
     // Cardinal marks
-    final labels = ['N', 'E', 'S', 'W'];
+    final cardinals = ['N', 'E', 'S', 'W'];
     for (var i = 0; i < 4; i++) {
       final ang = -math.pi / 2 + i * math.pi / 2;
       final pos = Offset(c.dx + math.cos(ang) * r * 0.82, c.dy + math.sin(ang) * r * 0.82);
+      final color = i == 0 ? AppTheme.goldSoft : Colors.white.withValues(alpha: 0.85);
       final tp = TextPainter(
         text: TextSpan(
-          text: labels[i],
-          style: TextStyle(
-              color: i == 0 ? cs.primary : cs.onSurface,
-              fontSize: 18,
-              fontWeight: FontWeight.w700),
+          text: cardinals[i],
+          style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: 1),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, pos - Offset(tp.width / 2, tp.height / 2));
     }
 
-    // Tick marks every 30°
-    final tickPaint = Paint()..color = cs.outlineVariant;
-    for (var deg = 0; deg < 360; deg += 30) {
+    // Minor tick marks every 10°
+    for (var deg = 0; deg < 360; deg += 10) {
       final ang = -math.pi / 2 + deg * math.pi / 180;
-      final outer = Offset(c.dx + math.cos(ang) * r * 0.92, c.dy + math.sin(ang) * r * 0.92);
-      final inner = Offset(c.dx + math.cos(ang) * r * 0.86, c.dy + math.sin(ang) * r * 0.86);
+      final tickLen = (deg % 30 == 0) ? 0.05 : 0.025;
+      final outer = Offset(c.dx + math.cos(ang) * r * 0.93, c.dy + math.sin(ang) * r * 0.93);
+      final inner = Offset(c.dx + math.cos(ang) * r * (0.93 - tickLen), c.dy + math.sin(ang) * r * (0.93 - tickLen));
+      final tickPaint = Paint()
+        ..color = Colors.white.withValues(alpha: deg % 30 == 0 ? 0.5 : 0.25)
+        ..strokeWidth = deg % 30 == 0 ? 1.5 : 1;
       canvas.drawLine(outer, inner, tickPaint);
     }
   }
@@ -450,24 +456,29 @@ class _QiblaArrowPainter extends CustomPainter {
     final c = size.center(Offset.zero);
     final r = size.shortestSide / 2;
 
+    // Needle body (gold gradient)
     final path = Path()
-      ..moveTo(c.dx, c.dy - r * 0.78)
-      ..lineTo(c.dx - r * 0.08, c.dy - r * 0.30)
-      ..lineTo(c.dx + r * 0.08, c.dy - r * 0.30)
+      ..moveTo(c.dx, c.dy - r * 0.72)
+      ..lineTo(c.dx - r * 0.07, c.dy - r * 0.20)
+      ..lineTo(c.dx, c.dy - r * 0.28)
+      ..lineTo(c.dx + r * 0.07, c.dy - r * 0.20)
       ..close();
-
-    final paint = Paint()..color = color;
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [color, color.withValues(alpha: 0.6)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
     canvas.drawPath(path, paint);
 
-    final tail = Paint()
-      ..color = color.withValues(alpha: 0.25)
-      ..style = PaintingStyle.fill;
-    final tailPath = Path()
-      ..moveTo(c.dx, c.dy + r * 0.65)
-      ..lineTo(c.dx - r * 0.05, c.dy + r * 0.30)
-      ..lineTo(c.dx + r * 0.05, c.dy + r * 0.30)
-      ..close();
-    canvas.drawPath(tailPath, tail);
+    // Center dot
+    final dotPaint = Paint()..color = color;
+    canvas.drawCircle(c, 5, dotPaint);
+    final ringPaint = Paint()
+      ..color = color.withValues(alpha: 0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    canvas.drawCircle(c, 10, ringPaint);
   }
 
   @override

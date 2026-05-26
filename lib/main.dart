@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'core/notifications/prayer_notifier.dart';
 import 'core/storage/settings_store.dart';
 import 'features/home/home_screen.dart';
 import 'ui/theme/app_theme.dart';
+import 'ui/widgets/desktop_redirect.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize the local-notification stack early so it's ready when we
-  // schedule. On web this is effectively a no-op.
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    systemNavigationBarColor: Colors.transparent,
+  ));
   try {
     await PrayerNotifier().init();
   } catch (_) {
@@ -50,12 +55,22 @@ class _SalatukAppState extends State<SalatukApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Salatuk',
+      title: 'Salatuk — Prayer times, Qibla, Adhkar',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: _themeMode,
-      home: const HomeScreen(),
+      home: const ResponsiveGate(child: HomeScreen()),
+      builder: (context, child) {
+        // Clamp text scale so accessibility settings don't break layouts.
+        final mq = MediaQuery.of(context);
+        return MediaQuery(
+          data: mq.copyWith(
+            textScaler: mq.textScaler.clamp(minScaleFactor: 0.9, maxScaleFactor: 1.25),
+          ),
+          child: child!,
+        );
+      },
     );
   }
 }

@@ -10,6 +10,7 @@ import '../../core/location/region_detector.dart';
 import '../../core/prayer_times/prayer_times_service.dart';
 import '../../core/prayer_times/sunni_method.dart';
 import '../../core/storage/settings_store.dart';
+import '../../ui/theme/app_theme.dart';
 import '../../ui/widgets/manual_location_picker.dart';
 
 class PrayerTimesScreen extends StatefulWidget {
@@ -38,7 +39,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   void initState() {
     super.initState();
     _bootstrap();
-    _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
   }
@@ -105,80 +106,63 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Prayer Times'),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            icon: const Icon(Icons.refresh),
-            onPressed: _loading ? null : _bootstrap,
-          ),
-        ],
-      ),
-      body: _buildBody(cs),
+      body: _buildBody(),
     );
   }
 
-  Widget _buildBody(ColorScheme cs) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+  Widget _buildBody() {
+    if (_loading) return const _LoadingState();
     if (_error != null) {
-      return Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.location_off, size: 64, color: cs.outline),
-            const SizedBox(height: 16),
-            Text(_error!, textAlign: TextAlign.center),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () async {
-                final picked = await showManualLocationPicker(context);
-                if (picked && mounted) _bootstrap();
-              },
-              icon: const Icon(Icons.place_outlined),
-              label: const Text('Pick a city'),
-            ),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: _bootstrap,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Try GPS again'),
-            ),
-          ],
-        ),
+      return _ErrorState(
+        message: _error!,
+        onRetry: _bootstrap,
+        onPickCity: () async {
+          final picked = await showManualLocationPicker(context);
+          if (picked && mounted) _bootstrap();
+        },
       );
     }
     final times = _times!;
     final now = DateTime.now();
     final nextLocal = _nextPrayer(times, _tomorrowFajr, now);
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return RefreshIndicator(
       onRefresh: _bootstrap,
-      child: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        children: [
-          _Header(
-            place: _placeLabel,
-            gregorian: DateFormat('EEEE, d MMMM y').format(now),
-            hijri: _hijriString(now),
-            method: _settings.method,
+      color: cs.primary,
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: _HeroHeader(
+              place: _placeLabel,
+              gregorian: DateFormat('EEEE, d MMMM y').format(now),
+              hijri: _hijriString(now),
+              method: _settings.method,
+              nextLabel: nextLocal.label,
+              nextTime: nextLocal.when,
+              countdown: nextLocal.when.difference(now),
+              gradient: AppTheme.heroGradient(cs, isDark: isDark),
+              onPickCity: () async {
+                final picked = await showManualLocationPicker(context);
+                if (picked && mounted) _bootstrap();
+              },
+            ),
           ),
-          const SizedBox(height: 12),
-          _NextPrayerCard(
-            label: nextLocal.label,
-            time: nextLocal.when,
-            countdown: nextLocal.when.difference(now),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 120),
+            sliver: SliverList.list(
+              children: [
+                _PrayerCard(name: 'Fajr', icon: Icons.dark_mode_outlined, time: times.fajr.toLocal(), isCurrent: _isCurrent(adhan.Prayer.fajr, times, now)),
+                _PrayerCard(name: 'Sunrise', icon: Icons.wb_twilight_outlined, time: times.sunrise.toLocal(), subtle: true),
+                _PrayerCard(name: 'Dhuhr', icon: Icons.wb_sunny_outlined, time: times.dhuhr.toLocal(), isCurrent: _isCurrent(adhan.Prayer.dhuhr, times, now)),
+                _PrayerCard(name: 'Asr', icon: Icons.brightness_5_outlined, time: times.asr.toLocal(), isCurrent: _isCurrent(adhan.Prayer.asr, times, now)),
+                _PrayerCard(name: 'Maghrib', icon: Icons.nights_stay_outlined, time: times.maghrib.toLocal(), isCurrent: _isCurrent(adhan.Prayer.maghrib, times, now)),
+                _PrayerCard(name: 'Isha', icon: Icons.bedtime_outlined, time: times.isha.toLocal(), isCurrent: _isCurrent(adhan.Prayer.isha, times, now)),
+              ],
+            ),
           ),
-          const SizedBox(height: 4),
-          _PrayerRow(name: 'Fajr', time: times.fajr.toLocal(), isCurrent: _isCurrent(adhan.Prayer.fajr, times, now)),
-          _PrayerRow(name: 'Sunrise', time: times.sunrise.toLocal(), subtle: true),
-          _PrayerRow(name: 'Dhuhr', time: times.dhuhr.toLocal(), isCurrent: _isCurrent(adhan.Prayer.dhuhr, times, now)),
-          _PrayerRow(name: 'Asr', time: times.asr.toLocal(), isCurrent: _isCurrent(adhan.Prayer.asr, times, now)),
-          _PrayerRow(name: 'Maghrib', time: times.maghrib.toLocal(), isCurrent: _isCurrent(adhan.Prayer.maghrib, times, now)),
-          _PrayerRow(name: 'Isha', time: times.isha.toLocal(), isCurrent: _isCurrent(adhan.Prayer.isha, times, now)),
         ],
       ),
     );
@@ -188,24 +172,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     return t.currentPrayer(date: now) == p;
   }
 
-  ({String label, DateTime when}) _nextPrayer(
-      adhan.PrayerTimes t, DateTime? tomorrowFajr, DateTime now) {
-    if (now.isBefore(t.fajr.toLocal())) {
-      return (label: 'Fajr', when: t.fajr.toLocal());
-    }
-    if (now.isBefore(t.dhuhr.toLocal())) {
-      return (label: 'Dhuhr', when: t.dhuhr.toLocal());
-    }
-    if (now.isBefore(t.asr.toLocal())) {
-      return (label: 'Asr', when: t.asr.toLocal());
-    }
-    if (now.isBefore(t.maghrib.toLocal())) {
-      return (label: 'Maghrib', when: t.maghrib.toLocal());
-    }
-    if (now.isBefore(t.isha.toLocal())) {
-      return (label: 'Isha', when: t.isha.toLocal());
-    }
-    return (label: 'Fajr', when: (tomorrowFajr ?? t.fajrAfter).toLocal());
+  ({String label, DateTime when}) _nextPrayer(adhan.PrayerTimes t, DateTime? tomorrowFajr, DateTime now) {
+    if (now.isBefore(t.fajr.toLocal())) return (label: 'Fajr', when: t.fajr.toLocal());
+    if (now.isBefore(t.dhuhr.toLocal())) return (label: 'Dhuhr', when: t.dhuhr.toLocal());
+    if (now.isBefore(t.asr.toLocal())) return (label: 'Asr', when: t.asr.toLocal());
+    if (now.isBefore(t.maghrib.toLocal())) return (label: 'Maghrib', when: t.maghrib.toLocal());
+    if (now.isBefore(t.isha.toLocal())) return (label: 'Isha', when: t.isha.toLocal());
+    return (label: 'Fajr (tomorrow)', when: (tomorrowFajr ?? t.fajrAfter).toLocal());
   }
 
   String _hijriString(DateTime d) {
@@ -214,104 +187,265 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   }
 }
 
-class _Header extends StatelessWidget {
-  final String place;
-  final String gregorian;
-  final String hijri;
-  final SunniMethod method;
-  const _Header({
-    required this.place,
-    required this.gregorian,
-    required this.hijri,
-    required this.method,
-  });
-
+class _LoadingState extends StatelessWidget {
+  const _LoadingState();
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+    return Center(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(hijri,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: cs.primary)),
-          const SizedBox(height: 2),
-          Text(gregorian, style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 6),
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(Icons.place_outlined, size: 16, color: cs.outline),
-            const SizedBox(width: 4),
-            Text(place, style: Theme.of(context).textTheme.bodySmall),
-          ]),
-          const SizedBox(height: 4),
-          Text('Method: ${method.displayName}',
-              style:
-                  Theme.of(context).textTheme.labelSmall?.copyWith(color: cs.outline)),
+          SizedBox(
+            width: 38,
+            height: 38,
+            child: CircularProgressIndicator(strokeWidth: 2.5, color: cs.primary),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Computing prayer times…',
+            style: TextStyle(color: cs.outline, fontSize: 14),
+          ),
         ],
       ),
     );
   }
 }
 
-class _NextPrayerCard extends StatelessWidget {
-  final String label;
-  final DateTime time;
-  final Duration countdown;
-  const _NextPrayerCard({
-    required this.label,
-    required this.time,
-    required this.countdown,
-  });
+class _ErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  final VoidCallback onPickCity;
+  const _ErrorState({required this.message, required this.onRetry, required this.onPickCity});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final h = countdown.inHours;
-    final m = countdown.inMinutes.remainder(60);
-    final s = countdown.inSeconds.remainder(60);
-    final cd = h > 0 ? '${h}h ${m}m' : '${m}m ${s}s';
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cs.primaryContainer,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Next prayer',
-                  style: TextStyle(color: cs.onPrimaryContainer.withValues(alpha: 0.8))),
-              const SizedBox(height: 4),
-              Text(label,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: cs.onPrimaryContainer, fontWeight: FontWeight.w600)),
-              Text(DateFormat.jm().format(time),
-                  style: TextStyle(color: cs.onPrimaryContainer)),
-            ],
-          ),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerLow,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.location_off_rounded, size: 56, color: cs.outline),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No location yet',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(message, textAlign: TextAlign.center, style: TextStyle(color: cs.outline, height: 1.5)),
+            const SizedBox(height: 32),
+            FilledButton.icon(
+              onPressed: onPickCity,
+              icon: const Icon(Icons.place_outlined),
+              label: const Text('Pick a city'),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try GPS again'),
+            ),
+          ],
         ),
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text('in', style: TextStyle(color: cs.onPrimaryContainer.withValues(alpha: 0.7))),
-          Text(cd,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: cs.onPrimaryContainer, fontWeight: FontWeight.w600)),
-        ])
-      ]),
+      ),
     );
   }
 }
 
-class _PrayerRow extends StatelessWidget {
+class _HeroHeader extends StatelessWidget {
+  final String place;
+  final String gregorian;
+  final String hijri;
+  final SunniMethod method;
+  final String nextLabel;
+  final DateTime nextTime;
+  final Duration countdown;
+  final LinearGradient gradient;
+  final VoidCallback onPickCity;
+
+  const _HeroHeader({
+    required this.place,
+    required this.gregorian,
+    required this.hijri,
+    required this.method,
+    required this.nextLabel,
+    required this.nextTime,
+    required this.countdown,
+    required this.gradient,
+    required this.onPickCity,
+  });
+
+  String _formatCountdown(Duration d) {
+    if (d.isNegative) return '0s';
+    final h = d.inHours;
+    final m = d.inMinutes.remainder(60);
+    final s = d.inSeconds.remainder(60);
+    if (h > 0) return '$h h $m m';
+    if (m > 0) return '$m m $s s';
+    return '$s s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(gradient: gradient),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top row: location
+              Row(
+                children: [
+                  Icon(Icons.place_outlined, size: 16, color: Colors.white.withValues(alpha: 0.8)),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: GestureDetector(
+                      onTap: onPickCity,
+                      child: Text(
+                        place,
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13, fontWeight: FontWeight.w500),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: onPickCity,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_location_alt_outlined, size: 13, color: Colors.white.withValues(alpha: 0.9)),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Change',
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              // Hijri date — Arabic-styled
+              Text(
+                hijri,
+                style: TextStyle(
+                  color: AppTheme.goldSoft,
+                  fontSize: 13,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                gregorian,
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13),
+              ),
+              const SizedBox(height: 32),
+              // Big next-prayer label
+              Text(
+                'NEXT PRAYER',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.65),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    nextLabel,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 48,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -1.2,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      DateFormat.jm().format(nextTime),
+                      style: TextStyle(
+                        color: AppTheme.goldSoft,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Countdown chip
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.hourglass_top_rounded, size: 16, color: AppTheme.goldSoft),
+                    const SizedBox(width: 8),
+                    Text(
+                      'in ${_formatCountdown(countdown)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        fontFeatures: [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '${method.displayName} • ${method.code}',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 11, letterSpacing: 0.5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PrayerCard extends StatelessWidget {
   final String name;
+  final IconData icon;
   final DateTime time;
   final bool subtle;
   final bool isCurrent;
-  const _PrayerRow({
+  const _PrayerCard({
     required this.name,
+    required this.icon,
     required this.time,
     this.subtle = false,
     this.isCurrent = false,
@@ -320,32 +454,91 @@ class _PrayerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+      margin: const EdgeInsets.symmetric(vertical: 5),
       decoration: BoxDecoration(
-        color: isCurrent ? cs.secondaryContainer : cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(14),
+        gradient: isCurrent
+            ? LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  AppTheme.gold.withValues(alpha: isDark ? 0.20 : 0.18),
+                  AppTheme.gold.withValues(alpha: isDark ? 0.08 : 0.06),
+                ],
+              )
+            : null,
+        color: isCurrent ? null : cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+        border: isCurrent
+            ? Border.all(color: AppTheme.gold.withValues(alpha: 0.4), width: 1.2)
+            : null,
       ),
-      child: Row(children: [
-        Expanded(
-          child: Text(
-            name,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: subtle ? cs.outline : null,
-                  fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w500,
-                ),
-          ),
-        ),
-        Text(
-          DateFormat.jm().format(time),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: subtle ? cs.outline : null,
-                fontFeatures: const [FontFeature.tabularFigures()],
-                fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w500,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isCurrent
+                    ? AppTheme.gold.withValues(alpha: 0.18)
+                    : cs.surfaceContainerHigh,
+                shape: BoxShape.circle,
               ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: isCurrent
+                    ? AppTheme.gold
+                    : (subtle ? cs.outline : cs.onSurface.withValues(alpha: 0.75)),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w600,
+                      color: subtle ? cs.outline : cs.onSurface,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  if (isCurrent) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'NOW',
+                      style: TextStyle(
+                        color: AppTheme.gold,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Text(
+              DateFormat.jm().format(time),
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                color: subtle ? cs.outline : cs.onSurface,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
         ),
-      ]),
+      ),
     );
   }
 }
