@@ -1,11 +1,11 @@
 {
-    "name": "salatuk",
-    "short_name": "salatuk",
+    "name": "Salatuk — Prayer times, Qibla, Adhkar",
+    "short_name": "Salatuk",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "Sunni Islamic prayer times, Qibla, and authenticated adhkar - free, open source, offline-first.",
+    "background_color": "#0E4A37",
+    "theme_color": "#1E6B52",
+    "description": "Sunni Islamic prayer times, Qibla, and authenticated adhkar — free, open source, offline-first.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
