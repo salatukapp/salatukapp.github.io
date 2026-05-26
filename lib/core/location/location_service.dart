@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
 
 class LocationResult {
@@ -46,7 +48,16 @@ class LocationService {
 
     LocationPermission perm = await Geolocator.checkPermission();
     if (perm == LocationPermission.denied) {
-      perm = await Geolocator.requestPermission();
+      // Browser prompts that get dismissed (rather than answered) can hang
+      // forever, so wrap the request in our own external timeout too.
+      try {
+        perm = await Geolocator.requestPermission().timeout(timeout);
+      } on TimeoutException {
+        throw const LocationException(
+          LocationFailure.timeout,
+          'No response to the location permission prompt. Try again, or enter a city manually in settings.',
+        );
+      }
       if (perm == LocationPermission.denied) {
         throw const LocationException(
           LocationFailure.permissionDenied,
@@ -63,15 +74,24 @@ class LocationService {
     }
 
     try {
+      // Belt-and-braces: the platform's own `timeLimit` is not honored by
+      // every implementation (especially geolocator_web on desktops with no
+      // GPS where the browser stalls). Add an external `.timeout()` so the
+      // UI always escapes.
       final pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.medium,
         timeLimit: timeout,
-      );
+      ).timeout(timeout);
       return LocationResult(
         latitude: pos.latitude,
         longitude: pos.longitude,
         timestamp: DateTime.now(),
         fromCache: false,
+      );
+    } on TimeoutException {
+      throw const LocationException(
+        LocationFailure.timeout,
+        'Location request timed out. On a desktop without GPS, enter a city manually in settings.',
       );
     } on Exception catch (e) {
       throw LocationException(LocationFailure.unknown, e.toString());

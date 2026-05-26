@@ -10,6 +10,7 @@ import '../../core/location/region_detector.dart';
 import '../../core/prayer_times/prayer_times_service.dart';
 import '../../core/prayer_times/sunni_method.dart';
 import '../../core/storage/settings_store.dart';
+import '../../ui/widgets/manual_location_picker.dart';
 
 class PrayerTimesScreen extends StatefulWidget {
   const PrayerTimesScreen({super.key});
@@ -131,11 +132,20 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             Icon(Icons.location_off, size: 64, color: cs.outline),
             const SizedBox(height: 16),
             Text(_error!, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             FilledButton.icon(
+              onPressed: () async {
+                final picked = await showManualLocationPicker(context);
+                if (picked && mounted) _bootstrap();
+              },
+              icon: const Icon(Icons.place_outlined),
+              label: const Text('Pick a city'),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
               onPressed: _bootstrap,
               icon: const Icon(Icons.refresh),
-              label: const Text('Try again'),
+              label: const Text('Try GPS again'),
             ),
           ],
         ),

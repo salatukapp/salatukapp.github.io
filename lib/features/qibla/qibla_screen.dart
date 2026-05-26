@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/location/location_service.dart';
 import '../../core/qibla/qibla_service.dart';
+import '../../core/storage/settings_store.dart';
+import '../../ui/widgets/manual_location_picker.dart';
 
 class QiblaScreen extends StatefulWidget {
   const QiblaScreen({super.key});
@@ -35,9 +37,16 @@ class _QiblaScreenState extends State<QiblaScreen> {
       _error = null;
     });
     try {
-      final loc = await _location.getCurrent();
-      _lat = loc.latitude;
-      _lng = loc.longitude;
+      // Honor a manual-location override first; only fall back to GPS otherwise.
+      final settings = await SettingsStore().load();
+      if (settings.manualLatitude != null && settings.manualLongitude != null) {
+        _lat = settings.manualLatitude;
+        _lng = settings.manualLongitude;
+      } else {
+        final loc = await _location.getCurrent();
+        _lat = loc.latitude;
+        _lng = loc.longitude;
+      }
       _qiblaBearing = QiblaService.bearingFromTrueNorth(
         latitude: _lat!,
         longitude: _lng!,
@@ -110,11 +119,27 @@ class _QiblaScreenState extends State<QiblaScreen> {
                 size: 64, color: Theme.of(context).colorScheme.outline),
             const SizedBox(height: 16),
             Text(_error!, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             FilledButton.icon(
+              onPressed: () async {
+                final picked = await showManualLocationPicker(context);
+                if (picked && mounted) _bootstrap();
+              },
+              icon: const Icon(Icons.place_outlined),
+              label: const Text('Pick a city'),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
               onPressed: _bootstrap,
               icon: const Icon(Icons.refresh),
-              label: const Text('Try again'),
+              label: const Text('Try GPS again'),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Desktop browsers don\'t have a magnetometer — the Qibla compass is fully accurate only on phones. On desktop you\'ll still see the target bearing.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.outline),
             ),
           ],
         ),
