@@ -67,8 +67,15 @@ class QiblaService {
     // Android path: raw magnetic azimuth — apply WMM declination.
     final iosNative = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
     final declToApply = iosNative ? 0.0 : declination;
-    return events.map((CompassEvent event) {
-      final rawHeading = event.heading ?? 0;
+    return events
+        // Filter out invalid readings. `event.heading` is null when the
+        // sensor hasn't produced a reading yet; on iOS it's negative when
+        // CLHeading.trueHeading is unavailable (location services off, etc).
+        // Treating either as 0 would peg the needle to "facing north" no
+        // matter where the phone actually points — a major Qibla error.
+        .where((e) => e.heading != null && e.heading! >= 0 && !e.heading!.isNaN)
+        .map((CompassEvent event) {
+      final rawHeading = event.heading!;
       final trueHeading = _normalize(rawHeading + declToApply);
       double delta = qibla - trueHeading;
       delta = ((delta + 540) % 360) - 180;
