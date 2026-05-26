@@ -1,0 +1,36 @@
+# Changelog
+
+## [0.1.0] — 2026-05-26
+
+Initial release.
+
+### Prayer times
+- 20 Sunni calculation methods: Muslim World League, ISNA, Egyptian, Umm al-Qura, Karachi, Singapore, Türkiye (Diyanet), Moonsighting Committee, Dubai, Algerian, Tunisia, Morocco, Jordan, Gulf Region, Portugal, France (UOIF), Russia, Indonesia, Kuwait, Qatar
+- Asr juristic rule selector (Standard / Hanafi)
+- Region-based auto-detection of the appropriate method, with manual override
+- Umm al-Qura: automatic +30 min Isha adjustment during Ramadan
+- Hijri calendar display
+- Live countdown to next prayer
+
+### Qibla
+- Great-circle bearing to the Kaaba (21.4225°N, 39.8262°E)
+- Magnetometer-based compass with magnetic-declination correction
+- Visual compass with North marker and Qibla needle
+
+### Adhkar
+- 64 authenticated entries: 22 morning, 20 evening, 9 after-prayer, 13 before-sleep
+- Every entry verified in Hisn al-Muslim with primary hadith citation
+- Arabic text with tashkeel, transliteration, English translation
+- Per-entry tap counter for repetitions
+
+### Other
+- Scheduled prayer notifications (with optional pre-prayer reminder)
+- Light/dark theme
+- Privacy-first: zero data collection, all calculation on-device, no third-party SDKs
+- 47 unit tests covering prayer math, Qibla bearings, region detection, and adhkar data integrity
+
+### Known limitations
+- Magnetic declination uses a centered-dipole approximation (~±2° accuracy globally). Full WMM 2025 implementation tracked for a future release.
+- Türkiye (Diyanet) method may deviate from official Diyanet tables by ±2-4 min in some seasons.
+- English UI only in this release; Arabic localization planned.
+- iOS native build deliberately skipped to keep the project 100% free — iOS users can install the web app to home screen as a PWA.

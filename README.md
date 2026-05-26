@@ -1,10 +1,17 @@
 # Salatuk
 
-A Sunni Islamic companion app for daily prayers, Qibla direction, and authenticated adhkar.
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Android](https://github.com/omarkaaki/salatuk/actions/workflows/android-release.yml/badge.svg)](https://github.com/omarkaaki/salatuk/actions/workflows/android-release.yml)
+[![Web](https://github.com/omarkaaki/salatuk/actions/workflows/web-deploy.yml/badge.svg)](https://github.com/omarkaaki/salatuk/actions/workflows/web-deploy.yml)
+[![Try it](https://img.shields.io/badge/try%20it-omarkaaki.me%2Fsalatuk-blue)](https://omarkaaki.me/salatuk/)
 
-**Package id:** `com.salatuk.mobile`
-**Platforms:** Android, iOS
-**Framework:** Flutter
+A free, open-source Sunni Islamic companion app for daily prayers, Qibla direction, and authenticated adhkar. Offline-first, no tracking, no ads, no accounts.
+
+**Live web app:** https://omarkaaki.me/salatuk/
+**Android APK:** [Latest release](https://github.com/omarkaaki/salatuk/releases/latest)
+**Package id:** `com.salatuk.salatuk`
+**Platforms:** Android, Web (PWA). iOS via PWA only — see [Distribution](#distribution) below.
+**Framework:** Flutter 3.44 / Dart 3.12
 
 ## Features
 
@@ -56,6 +63,34 @@ flutter build apk --release          # sideloadable APK
 flutter build ipa --release
 ```
 
+## Distribution
+
+| Channel | Cost | Status |
+|---|---|---|
+| Web / PWA (GitHub Pages) | free | ✅ live at https://omarkaaki.me/salatuk/ |
+| GitHub Releases (signed APK) | free | ✅ at [releases](https://github.com/omarkaaki/salatuk/releases) |
+| F-Droid | free | 📋 `.fdroid.yml` ready; submission to fdroiddata pending |
+| Amazon Appstore | free | 📋 metadata in `fastlane/`; submission pending |
+| Huawei AppGallery | free | 📋 metadata in `fastlane/`; submission pending |
+| Google Play | $25 one-time | ⏭️ deliberately skipped; AAB available at releases |
+| Apple App Store | $99/yr | ⏭️ deliberately skipped; iOS use the PWA |
+
+## Religious accuracy
+
+Every prayer-time calculation method has been cross-verified against three independent reference implementations:
+- [Batoul Apps Adhan library](https://github.com/batoulapps/adhan)
+- [PrayTimes.org](http://praytimes.org/calculation/) by Hamid Zarrabi-Zadeh
+- [Aladhan API](https://aladhan.com/calculation-methods)
+
+Adhkar are sourced from:
+- *Hisn al-Muslim* (حصن المسلم) by Sa'id ibn Ali ibn Wahf al-Qahtani
+- *Al-Adhkar* by Imam al-Nawawi
+- Primary hadith collections (Sahih al-Bukhari, Sahih Muslim, Sunan al-Tirmidhi, Sunan Abi Dawud, Sunan Ibn Majah)
+
+Every dhikr entry in the app includes Arabic text, transliteration, English translation, repetition count, hadith citation, and authentication grade. **No weakly-authenticated narrations are included.**
+
+See [RESEARCH.md](RESEARCH.md) for the full 3-source verification report (717 lines, 70 KB).
+
 ## License
 
-To be decided before publish. Likely MIT for code, with adhkar data attributed to original sources.
+MIT — see [LICENSE](LICENSE). Adhkar content is in the public domain and attributed to its original sources within the app.
