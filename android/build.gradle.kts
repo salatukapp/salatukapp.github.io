@@ -23,18 +23,25 @@ subprojects {
     // by the time we get here the subproject has already been evaluated and
     // afterEvaluate registration is too late.
     afterEvaluate {
-        // Match Kotlin's jvmTarget to whatever the plugin's Java compile is using
-        // (most plugins like flutter_timezone hardcode Java 11). We can't easily
-        // change their Java target from here, but lowering Kotlin to 11 makes
-        // each plugin module self-consistent.
+        // Force every plugin subproject to use JVM 17 for both Java AND Kotlin.
+        // Plugins ship with inconsistent defaults (flutter_timezone uses Java 11,
+        // flutter_compass_v2 uses Java 17, etc.) and Kotlin defaults vary too.
+        // Pinning both to 17 makes each module self-consistent.
         //
-        // EXCEPT for our own :app, which stays on Java 17 + Kotlin 17. Skipping
-        // it here lets app/build.gradle.kts's own JVM_17 setting take effect.
+        // Skip :app — it has its own JVM 17 config in app/build.gradle.kts.
         if (project.name != "app") {
+            plugins.withId("com.android.library") {
+                extensions.findByType(com.android.build.gradle.LibraryExtension::class.java)?.apply {
+                    compileOptions {
+                        sourceCompatibility = JavaVersion.VERSION_17
+                        targetCompatibility = JavaVersion.VERSION_17
+                    }
+                }
+            }
             plugins.withId("org.jetbrains.kotlin.android") {
                 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
                     compilerOptions {
-                        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+                        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
                     }
                 }
             }
