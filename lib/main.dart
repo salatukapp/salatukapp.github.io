@@ -6,6 +6,7 @@ import 'core/storage/settings_store.dart';
 import 'features/home/home_screen.dart';
 import 'ui/theme/app_theme.dart';
 import 'ui/widgets/desktop_redirect.dart';
+import 'ui/widgets/location_first_run.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,7 +61,7 @@ class _SalatukAppState extends State<SalatukApp> {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: _themeMode,
-      home: const ResponsiveGate(child: HomeScreen()),
+      home: const ResponsiveGate(child: LocationGate(child: HomeScreen())),
       builder: (context, child) {
         // Clamp text scale so accessibility settings don't break layouts.
         final mq = MediaQuery.of(context);

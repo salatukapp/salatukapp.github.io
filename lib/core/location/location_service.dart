@@ -35,8 +35,11 @@ enum LocationFailure {
 class LocationService {
   /// Requests permission (if needed) and returns the current position.
   /// Throws [LocationException] on any failure.
+  ///
+  /// On the web, this must be called from a user-gesture handler (button tap)
+  /// or iOS Safari will silently refuse to show the permission prompt.
   Future<LocationResult> getCurrent({
-    Duration timeout = const Duration(seconds: 12),
+    Duration timeout = const Duration(seconds: 10),
   }) async {
     final servicesEnabled = await Geolocator.isLocationServiceEnabled();
     if (!servicesEnabled) {
