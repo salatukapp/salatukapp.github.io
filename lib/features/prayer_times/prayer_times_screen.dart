@@ -39,6 +39,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   adhan.PrayerTimes? _times;
   DateTime? _tomorrowFajr;
   Timer? _ticker;
+  DateTime? _lastFix;
+  bool _fromGps = false;
 
   @override
   void initState() {
@@ -79,13 +81,16 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
         _lat = _settings.manualLatitude;
         _lng = _settings.manualLongitude;
         _placeLabel = _settings.manualCityLabel ?? 'Manual location';
+        _fromGps = false;
       } else {
         final loc = await _location.getCurrent();
         _lat = loc.latitude;
         _lng = loc.longitude;
         _placeLabel =
-            '${loc.latitude.toStringAsFixed(2)}°, ${loc.longitude.toStringAsFixed(2)}°';
+            '${loc.latitude.toStringAsFixed(3)}°, ${loc.longitude.toStringAsFixed(3)}°';
+        _fromGps = true;
       }
+      _lastFix = DateTime.now();
 
       SunniMethod method = _settings.method;
       if (_settings.autoDetectMethod) {
@@ -164,10 +169,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
               nextTime: nextLocal.when,
               countdown: nextLocal.when.difference(now),
               gradient: AppTheme.heroGradient(cs, isDark: isDark),
+              lastFix: _lastFix,
+              fromGps: _fromGps,
               onPickCity: () async {
                 final picked = await showManualLocationPicker(context);
                 if (picked && mounted) _bootstrap();
               },
+              onRefresh: _bootstrap,
             ),
           ),
           SliverPadding(
@@ -340,7 +348,10 @@ class _HeroHeader extends StatelessWidget {
   final DateTime nextTime;
   final Duration countdown;
   final LinearGradient gradient;
+  final DateTime? lastFix;
+  final bool fromGps;
   final VoidCallback onPickCity;
+  final VoidCallback onRefresh;
 
   const _HeroHeader({
     required this.place,
@@ -351,8 +362,20 @@ class _HeroHeader extends StatelessWidget {
     required this.nextTime,
     required this.countdown,
     required this.gradient,
+    required this.lastFix,
+    required this.fromGps,
     required this.onPickCity,
+    required this.onRefresh,
   });
+
+  String _ago(DateTime t) {
+    final d = DateTime.now().difference(t);
+    if (d.inSeconds < 30) return 'just now';
+    if (d.inMinutes < 1) return '${d.inSeconds}s ago';
+    if (d.inMinutes < 60) return '${d.inMinutes}m ago';
+    if (d.inHours < 24) return '${d.inHours}h ago';
+    return '${d.inDays}d ago';
+  }
 
   String _formatCountdown(Duration d) {
     if (d.isNegative) return '0s';
@@ -375,7 +398,7 @@ class _HeroHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top row: location
+              // Top row: location + live GPS chip + actions
               Row(
                 children: [
                   Icon(Icons.place_outlined, size: 16, color: Colors.white.withValues(alpha: 0.8)),
@@ -390,29 +413,47 @@ class _HeroHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   GestureDetector(
-                    onTap: onPickCity,
+                    onTap: onRefresh,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit_location_alt_outlined, size: 13, color: Colors.white.withValues(alpha: 0.9)),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Change',
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 11),
-                          ),
-                        ],
-                      ),
+                      child: Icon(Icons.refresh_rounded, size: 14, color: Colors.white.withValues(alpha: 0.9)),
                     ),
                   ),
                 ],
               ),
+              if (lastFix != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: fromGps ? const Color(0xFF6BE89F) : AppTheme.goldSoft,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (fromGps ? const Color(0xFF6BE89F) : AppTheme.goldSoft).withValues(alpha: 0.6),
+                            blurRadius: 6,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      fromGps ? 'GPS · fixed ${_ago(lastFix!)}' : 'Manual location · set ${_ago(lastFix!)}',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 24),
               // Hijri date — Arabic-styled
               Text(
