@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../../core/location/location_service.dart';
@@ -145,6 +146,16 @@ class _QiblaScreenState extends State<QiblaScreen> {
         ),
       );
     }
+    // On web the flutter_compass_v2 plugin has no implementation, so the
+    // live compass stream never emits. Show a clear static-bearing view
+    // instead of a confusing spinning UI.
+    if (kIsWeb) {
+      return _StaticBearingView(
+        bearing: _qiblaBearing!,
+        latitude: _lat!,
+        longitude: _lng!,
+      );
+    }
     return StreamBuilder<QiblaReading>(
       stream: _stream,
       builder: (context, snap) {
@@ -156,6 +167,121 @@ class _QiblaScreenState extends State<QiblaScreen> {
           longitude: _lng!,
         );
       },
+    );
+  }
+}
+
+/// Browser-friendly view: a fixed dial that points North and a Qibla arrow
+/// at the absolute bearing. Used on web (where browsers expose no
+/// magnetometer reliably) and as a fallback elsewhere.
+class _StaticBearingView extends StatelessWidget {
+  final double bearing;
+  final double latitude;
+  final double longitude;
+  const _StaticBearingView({
+    required this.bearing,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final qiblaRotation = bearing * math.pi / 180;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Column(
+              children: [
+                Text(
+                  '${bearing.toStringAsFixed(1)}°',
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                Text('Qibla bearing from true north',
+                    style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: SizedBox(
+              width: 280,
+              height: 280,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CustomPaint(
+                    size: const Size.square(280),
+                    painter: _CompassDialPainter(cs),
+                  ),
+                  Transform.rotate(
+                    angle: qiblaRotation,
+                    child: CustomPaint(
+                      size: const Size.square(280),
+                      painter: _QiblaArrowPainter(cs.primary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: cs.secondaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Icon(Icons.info_outline,
+                      size: 18, color: cs.onSecondaryContainer),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Live compass unavailable in browser',
+                    style: TextStyle(
+                      color: cs.onSecondaryContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ]),
+                const SizedBox(height: 8),
+                Text(
+                  'Browsers do not expose a reliable magnetometer to web pages. '
+                  'The diagram above shows the Qibla bearing from true north — '
+                  'face north (use a real compass or your phone\'s native compass app), '
+                  'then turn ${bearing.toStringAsFixed(0)}° clockwise.\n\n'
+                  'For a live compass that follows your phone, install the Android app from '
+                  'github.com/omarkaaki/salatuk/releases.',
+                  style: TextStyle(
+                    color: cs.onSecondaryContainer,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: Text(
+              'Location: ${latitude.toStringAsFixed(2)}°, ${longitude.toStringAsFixed(2)}°',
+              style: Theme.of(context)
+                  .textTheme
+                  .labelSmall
+                  ?.copyWith(color: cs.outline),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
