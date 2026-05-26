@@ -35,7 +35,7 @@ class _DesktopRedirectState extends State<DesktopRedirect> with SingleTickerProv
   }
 
   Future<void> _copyLink() async {
-    await Clipboard.setData(const ClipboardData(text: 'https://omarkaaki.me/salatuk/'));
+    await Clipboard.setData(const ClipboardData(text: 'https://salatukapp.github.io/'));
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -47,13 +47,14 @@ class _DesktopRedirectState extends State<DesktopRedirect> with SingleTickerProv
   }
 
   Future<void> _openApk() async {
+    // Link to the latest release dynamically so it auto-updates with new versions.
     final uri = Uri.parse(
-        'https://github.com/omarkaaki/salatuk/releases/download/v0.1.0/app-release.apk');
+        'https://github.com/salatukapp/salatukapp.github.io/releases/latest');
     if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 
   Future<void> _openRepo() async {
-    final uri = Uri.parse('https://github.com/omarkaaki/salatuk');
+    final uri = Uri.parse('https://github.com/salatukapp/salatukapp.github.io');
     if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 
@@ -213,7 +214,7 @@ class _DesktopRedirectState extends State<DesktopRedirect> with SingleTickerProv
             _FooterLink(
               label: 'No tracking',
               onTap: () => launchUrl(Uri.parse(
-                  'https://github.com/omarkaaki/salatuk/blob/main/PRIVACY_POLICY.md')),
+                  'https://github.com/salatukapp/salatukapp.github.io/blob/main/PRIVACY_POLICY.md')),
             ),
           ],
         ),

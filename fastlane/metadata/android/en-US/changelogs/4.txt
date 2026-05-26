@@ -1,0 +1,4 @@
+• Project moved to dedicated salatukapp GitHub organization
+• Web app now lives at https://salatukapp.github.io (clean URL, no personal name)
+• Security hardening: Content Security Policy + HTTPS-only enforced
+• In-app links updated to the new URLs

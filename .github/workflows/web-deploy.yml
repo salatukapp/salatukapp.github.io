@@ -38,7 +38,9 @@ jobs:
         run: flutter test test/unit
 
       - name: Build web (release)
-        run: flutter build web --release --base-href=/salatuk/
+        # Repo is named salatukapp.github.io (root user/org page),
+        # so base-href is '/' instead of '/<repo>/'.
+        run: flutter build web --release --base-href=/
 
       - uses: actions/upload-pages-artifact@v3
         with:

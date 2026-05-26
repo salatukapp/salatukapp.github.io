@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.3] — 2026-05-26
+
+### Brand + Web hosting
+- Project moved to the dedicated **salatukapp** GitHub organization. The web app now lives at **https://salatukapp.github.io** (clean root URL, no personal name, no subpath).
+- Repository renamed to `salatukapp/salatukapp.github.io` to enable the root-level user/org page URL.
+- All in-app links (Settings → Privacy policy, Source code, Get the APK) updated to the new URLs.
+
+### Security hardening (v0.1.3 also includes everything from 0.1.2)
+- Content Security Policy: every third-party origin blocked
+- HTTPS-only enforcement on the Pages site
+- Referrer-Policy `strict-origin-when-cross-origin`
+- `frame-ancestors 'none'` (clickjacking guard)
+- `X-Content-Type-Options: nosniff`
+
 ## [0.1.2] — 2026-05-26
 
 ### Changes

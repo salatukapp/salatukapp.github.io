@@ -14,7 +14,7 @@ Privacy
 • Zero data collection — nothing leaves your device
 • No analytics, no ads, no trackers, no third-party SDKs
 • Works fully offline after installation
-• Open source — code at https://github.com/omarkaaki/salatuk
+• Open source — code at https://github.com/salatukapp/salatukapp.github.io
 
 Religious accuracy
 Every prayer-time calculation method has been cross-verified against three independent reference implementations (Batoul Apps Adhan, PrayTimes.org, Aladhan API). Every adhkar entry includes the primary hadith citation and authentication grade. No weakly-authenticated narrations are included. See RESEARCH.md in the repository for full source documentation.

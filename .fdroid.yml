@@ -8,10 +8,10 @@ Categories:
 License: MIT
 AuthorName: Omar Kaaki
 AuthorEmail: omarkaaki2004@gmail.com
-WebSite: https://github.com/omarkaaki/salatuk
-SourceCode: https://github.com/omarkaaki/salatuk
-IssueTracker: https://github.com/omarkaaki/salatuk/issues
-Changelog: https://github.com/omarkaaki/salatuk/releases
+WebSite: https://github.com/salatukapp/salatukapp.github.io
+SourceCode: https://github.com/salatukapp/salatukapp.github.io
+IssueTracker: https://github.com/salatukapp/salatukapp.github.io/issues
+Changelog: https://github.com/salatukapp/salatukapp.github.io/releases
 
 AutoName: Salatuk
 Summary: Sunni prayer times, Qibla, and authenticated daily adhkar
@@ -42,7 +42,7 @@ Description: |
     * All calculation happens on-device
 
 RepoType: git
-Repo: https://github.com/omarkaaki/salatuk.git
+Repo: https://github.com/salatukapp/salatukapp.github.io.git
 
 Builds:
   - versionName: 0.1.0

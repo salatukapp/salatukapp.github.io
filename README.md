@@ -1,14 +1,14 @@
 # Salatuk
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Android](https://github.com/omarkaaki/salatuk/actions/workflows/android-release.yml/badge.svg)](https://github.com/omarkaaki/salatuk/actions/workflows/android-release.yml)
-[![Web](https://github.com/omarkaaki/salatuk/actions/workflows/web-deploy.yml/badge.svg)](https://github.com/omarkaaki/salatuk/actions/workflows/web-deploy.yml)
-[![Try it](https://img.shields.io/badge/try%20it-omarkaaki.me%2Fsalatuk-blue)](https://omarkaaki.me/salatuk/)
+[![Android](https://github.com/salatukapp/salatukapp.github.io/actions/workflows/android-release.yml/badge.svg)](https://github.com/salatukapp/salatukapp.github.io/actions/workflows/android-release.yml)
+[![Web](https://github.com/salatukapp/salatukapp.github.io/actions/workflows/web-deploy.yml/badge.svg)](https://github.com/salatukapp/salatukapp.github.io/actions/workflows/web-deploy.yml)
+[![Try it](https://img.shields.io/badge/try%20it-omarkaaki.me%2Fsalatuk-blue)](https://salatukapp.github.io/)
 
 A free, open-source Sunni Islamic companion app for daily prayers, Qibla direction, and authenticated adhkar. Offline-first, no tracking, no ads, no accounts.
 
-**Live web app:** https://omarkaaki.me/salatuk/
-**Android APK:** [Latest release](https://github.com/omarkaaki/salatuk/releases/latest)
+**Live web app:** https://salatukapp.github.io/
+**Android APK:** [Latest release](https://github.com/salatukapp/salatukapp.github.io/releases/latest)
 **Package id:** `com.salatuk.salatuk`
 **Platforms:** Android, Web (PWA). iOS via PWA only — see [Distribution](#distribution) below.
 **Framework:** Flutter 3.44 / Dart 3.12
@@ -67,8 +67,8 @@ flutter build ipa --release
 
 | Channel | Cost | Status |
 |---|---|---|
-| Web / PWA (GitHub Pages) | free | ✅ live at https://omarkaaki.me/salatuk/ |
-| GitHub Releases (signed APK) | free | ✅ at [releases](https://github.com/omarkaaki/salatuk/releases) |
+| Web / PWA (GitHub Pages) | free | ✅ live at https://salatukapp.github.io |
+| GitHub Releases (signed APK) | free | ✅ at [releases](https://github.com/salatukapp/salatukapp.github.io/releases) |
 | F-Droid | free | 📋 `.fdroid.yml` ready; submission to fdroiddata pending |
 | Amazon Appstore | free | 📋 metadata in `fastlane/`; submission pending |
 | Huawei AppGallery | free | 📋 metadata in `fastlane/`; submission pending |
