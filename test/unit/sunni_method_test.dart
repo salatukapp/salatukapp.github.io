@@ -1,0 +1,55 @@
+import 'package:adhan_dart/adhan_dart.dart' as adhan;
+import 'package:flutter_test/flutter_test.dart';
+import 'package:salatuk/core/prayer_times/sunni_method.dart';
+
+void main() {
+  group('SunniMethod', () {
+    test('every value maps to valid CalculationParameters', () {
+      for (final m in SunniMethod.values) {
+        final p = m.toAdhanParameters();
+        expect(p, isA<adhan.CalculationParameters>(), reason: 'for $m');
+      }
+    });
+
+    test('excludes Shia methods (Tehran, Jafari)', () {
+      final codes = SunniMethod.values.map((m) => m.code).toList();
+      // Tehran/Jafari are NOT in our Sunni enum.
+      expect(codes.contains('TEH'), isFalse);
+      expect(codes.contains('JAF'), isFalse);
+    });
+
+    test('fromCode round-trips known codes', () {
+      for (final m in SunniMethod.values) {
+        expect(SunniMethod.fromCode(m.code), equals(m));
+      }
+    });
+
+    test('fromCode returns MWL for unknown codes', () {
+      expect(SunniMethod.fromCode('XXX'), equals(SunniMethod.muslimWorldLeague));
+    });
+
+    test('Egyptian uses 19.5°/17.5° per RESEARCH.md §5.1 resolution', () {
+      final p = SunniMethod.egyptian.toAdhanParameters();
+      expect(p.fajrAngle, 19.5);
+      expect(p.ishaAngle, 17.5);
+    });
+
+    test('Umm al-Qura uses 90 min Isha interval', () {
+      final p = SunniMethod.ummAlQura.toAdhanParameters();
+      expect(p.fajrAngle, 18.5);
+      expect(p.ishaInterval, 90);
+    });
+
+    test('Karachi uses 18°/18°', () {
+      final p = SunniMethod.karachi.toAdhanParameters();
+      expect(p.fajrAngle, 18);
+      expect(p.ishaAngle, 18);
+    });
+
+    test('MWL uses 18°/17°', () {
+      final p = SunniMethod.muslimWorldLeague.toAdhanParameters();
+      expect(p.fajrAngle, 18);
+      expect(p.ishaAngle, 17);
+    });
+  });
+}

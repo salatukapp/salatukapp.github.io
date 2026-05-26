@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "salatuk-web",
+      "runtimeExecutable": "C:\\src\\flutter\\bin\\flutter.bat",
+      "runtimeArgs": ["run", "-d", "web-server", "--web-port=8080", "--web-hostname=127.0.0.1"],
+      "port": 8080
+    }
+  ]
+}
