@@ -1,6 +1,10 @@
 {
     "name": "Salatuk — Prayer times, Qibla, Adhkar",
     "short_name": "Salatuk",
+    "id": "/",
+    "lang": "en",
+    "dir": "ltr",
+    "categories": ["lifestyle", "utilities"],
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0E4A37",

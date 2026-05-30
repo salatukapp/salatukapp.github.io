@@ -33,7 +33,7 @@ The app schedules local notifications on your device to alert you at each of the
 
 ## Data storage
 
-All app data — your settings, your favorited adhkar, your prayer history if enabled — is stored locally on your device in an encrypted SQLite database. Uninstalling the app deletes all of this data.
+All app data — your chosen calculation method, location preference, and notification settings — is stored locally on your device using the platform's standard local storage (Android `SharedPreferences`, or your browser's `localStorage` on the web), within the app's private storage area. It is not encrypted at rest beyond the operating system's own app-sandbox protections, and it never leaves your device. Uninstalling the app (or clearing site data in the browser) deletes all of it.
 
 ## Children
 
@@ -62,4 +62,4 @@ For questions about this policy or the app, contact: **omarkaaki2004@gmail.com**
 
 ---
 
-*This policy applies to Salatuk on Android (Google Play) and iOS (Apple App Store).*
+*This policy applies to Salatuk as a web app at https://salatukapp.web.app (including the Add-to-Home-Screen PWA) and as the Android APK distributed via GitHub Releases.*

@@ -401,29 +401,32 @@ class _HeroHeader extends StatelessWidget {
               // Top row: location + live GPS chip + actions
               Row(
                 children: [
-                  Icon(Icons.place_outlined, size: 16, color: Colors.white.withValues(alpha: 0.8)),
+                  Icon(Icons.place_outlined, size: 16, color: Colors.white.withValues(alpha: 0.85)),
                   const SizedBox(width: 6),
                   Flexible(
-                    child: GestureDetector(
-                      onTap: onPickCity,
-                      child: Text(
-                        place,
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13, fontWeight: FontWeight.w500),
-                        overflow: TextOverflow.ellipsis,
+                    child: Semantics(
+                      button: true,
+                      label: 'Change location',
+                      child: InkWell(
+                        onTap: onPickCity,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Text(
+                            place,
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13, fontWeight: FontWeight.w500),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: onRefresh,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(Icons.refresh_rounded, size: 14, color: Colors.white.withValues(alpha: 0.9)),
-                    ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    onPressed: onRefresh,
+                    tooltip: 'Refresh location',
+                    visualDensity: VisualDensity.compact,
+                    icon: Icon(Icons.refresh_rounded, size: 18, color: Colors.white.withValues(alpha: 0.95)),
                   ),
                 ],
               ),
@@ -449,7 +452,7 @@ class _HeroHeader extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       fromGps ? 'GPS · fixed ${_ago(lastFix!)}' : 'Manual location · set ${_ago(lastFix!)}',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.w500),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.88), fontSize: 11, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -468,14 +471,14 @@ class _HeroHeader extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 gregorian,
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.88), fontSize: 13),
               ),
               const SizedBox(height: 32),
               // Big next-prayer label
               Text(
                 'NEXT PRAYER',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.65),
+                  color: Colors.white.withValues(alpha: 0.85),
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 2,
@@ -485,14 +488,23 @@ class _HeroHeader extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    nextLabel,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 48,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -1.2,
-                      height: 1,
+                  // Flexible + FittedBox so a long label like "Fajr (tomorrow)"
+                  // shrinks to fit instead of overflowing on narrow phones.
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        nextLabel,
+                        maxLines: 1,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 48,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -1.2,
+                          height: 1,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -500,7 +512,7 @@ class _HeroHeader extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Text(
                       DateFormat.jm().format(nextTime),
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppTheme.goldSoft,
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -538,7 +550,7 @@ class _HeroHeader extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 '${method.displayName} • ${method.code}',
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 11, letterSpacing: 0.5),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 11, letterSpacing: 0.5),
               ),
             ],
           ),
@@ -566,6 +578,9 @@ class _PrayerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Gold reads fine on dark, but #C9A961 on the light gold-tinted card is
+    // ~1.9:1. Use the deep onSecondaryContainer gold (#4A3C0F, ~9:1) in light.
+    final activeAccent = isDark ? AppTheme.gold : cs.onSecondaryContainer;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 350),
@@ -605,7 +620,7 @@ class _PrayerCard extends StatelessWidget {
                 icon,
                 size: 20,
                 color: isCurrent
-                    ? AppTheme.gold
+                    ? activeAccent
                     : (subtle ? cs.outline : cs.onSurface.withValues(alpha: 0.75)),
               ),
             ),
@@ -628,7 +643,7 @@ class _PrayerCard extends StatelessWidget {
                     Text(
                       'NOW',
                       style: TextStyle(
-                        color: AppTheme.gold,
+                        color: activeAccent,
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.5,

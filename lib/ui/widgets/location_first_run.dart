@@ -37,6 +37,13 @@ class _LocationFirstRunState extends State<LocationFirstRun> {
       // GPS time to actually acquire a fix indoors / on slower hardware.
       await _location.getCurrent(timeout: const Duration(seconds: 20));
       if (!mounted) return;
+      // Persist the GPS opt-in so the first-run chooser isn't shown again on
+      // every cold start. We do NOT write manualLatitude (that would freeze
+      // the location and disable live GPS in the prayer/qibla screens).
+      final store = SettingsStore();
+      final current = await store.load();
+      await store.save(current.copyWith(gpsChosen: true));
+      if (!mounted) return;
       widget.onReady();
     } on LocationException catch (e) {
       if (!mounted) return;
@@ -66,92 +73,102 @@ class _LocationFirstRunState extends State<LocationFirstRun> {
       body: Container(
         decoration: BoxDecoration(gradient: AppTheme.heroGradient(cs, isDark: isDark)),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: Column(
-              children: [
-                const Spacer(),
-                Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.5),
+          // Scroll + min-height centering so the fixed content can't overflow
+          // on short/landscape screens (no Spacer-collapse RenderFlex error).
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Padding(
+                  padding: const EdgeInsets.all(28),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 24),
+                      Container(
+                        width: 96,
+                        height: 96,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.5),
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.place_outlined, color: Colors.white, size: 44),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      const Text(
+                        'Where are you?',
+                        style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Salatuk needs your location to calculate accurate prayer times and the Qibla bearing. Everything stays on your device — we never send your location anywhere.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.88), fontSize: 14, height: 1.6),
+                      ),
+                      if (_error != null) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                          ),
+                          child: Text(
+                            _error!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.5),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _requesting ? null : _useGps,
+                          icon: _requesting
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.charcoalDeep),
+                                )
+                              : const Icon(Icons.my_location_rounded),
+                          label: Text(_requesting ? 'Asking for permission…' : 'Use my GPS location'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppTheme.gold,
+                            foregroundColor: AppTheme.charcoalDeep,
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _requesting ? null : _pickCity,
+                          icon: const Icon(Icons.place_outlined),
+                          label: const Text('Choose a city from the list'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: BorderSide(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Text(
+                        'On iPhone, the browser will ask for permission once. You can change your location later in Settings.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11, height: 1.5),
+                      ),
+                    ],
                   ),
-                  child: const Center(
-                    child: Icon(Icons.place_outlined, color: Colors.white, size: 44),
-                  ),
                 ),
-                const SizedBox(height: 32),
-                const Text(
-                  'Where are you?',
-                  style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: -0.5),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Salatuk needs your location to calculate accurate prayer times and the Qibla bearing. Everything stays on your device — we never send your location anywhere.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14, height: 1.6),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      _error!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.5),
-                    ),
-                  ),
-                ],
-                const Spacer(),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: _requesting ? null : _useGps,
-                    icon: _requesting
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.charcoalDeep),
-                          )
-                        : const Icon(Icons.my_location_rounded),
-                    label: Text(_requesting ? 'Asking for permission…' : 'Use my GPS location'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppTheme.gold,
-                      foregroundColor: AppTheme.charcoalDeep,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _requesting ? null : _pickCity,
-                    icon: const Icon(Icons.place_outlined),
-                    label: const Text('Choose a city from the list'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: BorderSide(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  'On iPhone, the browser will ask for permission once. You can change your location later in Settings.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 11, height: 1.5),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -185,7 +202,9 @@ class _LocationGateState extends State<LocationGate> {
     final s = await _store.load();
     if (!mounted) return;
     setState(() {
-      _ready = s.manualLatitude != null && s.manualLongitude != null;
+      // Ready if the user has a manual city OR has previously opted into GPS.
+      _ready = (s.manualLatitude != null && s.manualLongitude != null) ||
+          s.gpsChosen;
       _loading = false;
     });
   }

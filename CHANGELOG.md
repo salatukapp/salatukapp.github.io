@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.2.0] — 2026-05-26
+
+A 57-agent adversarial audit (7 dimensions: logic, layout, iPhone-Safari, Android, security, web standards, accessibility) found 39 confirmed issues. All critical/high and most medium/low are fixed in this release.
+
+### Critical / High
+- **Android web Qibla fixed (the wrong-direction bug):** the compass now (a) converts `alpha` correctly as `360 − alpha` (W3C alpha is counter-clockwise), (b) only accepts **absolute** orientation frames so an arbitrary-zero relative frame can't poison the heading, and (c) compensates for `screen.orientation.angle` in landscape. A pure `CompassMath.headingFromAlpha` helper + regression tests (alpha 0/90/180/270 → N/W/S/E) prevent future inversions.
+- **Invalid compass readings filtered** (null / negative / NaN headings no longer peg the needle to north).
+- **Branded app icons:** replaced the default Flutter logo across favicon, web PWA icons (incl. maskable), and Android launcher/adaptive icons with an emerald + gold crescent-and-star mark.
+- **Hero "Fajr (tomorrow)" overflow fixed** — the 48px next-prayer label now scales to fit on narrow phones.
+- **Light-mode contrast pass (WCAG):** darker hero gradient, readable secondary-text token, darker "NOW" badge — secondary text now clears 4.5:1.
+
+### Medium
+- GPS choice now persists (no more first-run location prompt on every launch).
+- Desktop redirect now gates on `shortestSide` — a landscape iPhone/iPad no longer gets the "download the APK" screen.
+- iPhone PWA status bar set to opaque so the header isn't drawn under the notch.
+- Privacy policy reconciled with reality: removed the false "encrypted SQLite" and App-Store/Play claims; the Qibla "verify on IslamicFinder" button no longer transmits your coordinates.
+- Accessibility: compass exposes a live screen-reader instruction; Arabic adhkar carry RTL semantics; reduced-motion respected; bigger touch targets + tooltips.
+
+### Low / polish
+- Real CSP delivered as an HTTP header (so `frame-ancestors` takes effect) + `X-Frame-Options: DENY`.
+- Open Graph / Twitter card tags, on-brand pre-boot loader (no white flash), `<html lang>`, `<noscript>`, manifest `id`/`lang`/`dir`/`categories`.
+- `AmiriQuran` font registered; dead `generate: true` removed; `mounted` guard on adhkar load error; WMM `isExpired()` maintenance signal.
+- 70 unit tests passing (added compass-heading mapping tests).
+
+
 ## [0.1.4] — 2026-05-26
 
 ### Critical correctness fixes (all four from AUDIT.md)

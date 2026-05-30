@@ -43,8 +43,12 @@ class AppTheme {
       surfaceContainer: const Color(0xFFF0EBDF),
       surfaceContainerHigh: const Color(0xFFE9E2D2),
       surfaceContainerHighest: const Color(0xFFE0D7C2),
-      outline: const Color(0xFFA89F8A),
-      outlineVariant: const Color(0xFFD5CCB7),
+      // `outline` doubles as the secondary-TEXT token across the app (borders
+      // use outlineVariant). Darkened from #A89F8A (~2.4:1, failed WCAG) to
+      // #5E5640 (~6.5:1 on ivory, ~5.6:1 on the high surface) so body text is
+      // legible in light mode.
+      outline: const Color(0xFF5E5640),
+      outlineVariant: const Color(0xFFC4BBA3),
       shadow: Colors.black,
       scrim: Colors.black,
       inverseSurface: charcoal,
@@ -78,7 +82,10 @@ class AppTheme {
       surfaceContainer: const Color(0xFF17231F),
       surfaceContainerHigh: const Color(0xFF1F2D28),
       surfaceContainerHighest: const Color(0xFF273731),
-      outline: const Color(0xFF6F7873),
+      // Lightened from #6F7873 (~3.1–4.1:1, sub-4.5 for body) to #97A09B so
+      // secondary text clears 4.5:1 on the dark surfaces. Borders use
+      // outlineVariant, which stays dim.
+      outline: const Color(0xFF97A09B),
       outlineVariant: const Color(0xFF3A4540),
       shadow: Colors.black,
       scrim: Colors.black,
@@ -215,13 +222,16 @@ class AppTheme {
         stops: const [0.0, 0.6, 1.0],
       );
     }
+    // Light-mode hero: keep the stops dark enough that white/gold text clears
+    // WCAG 4.5:1 over the WHOLE gradient (the old #3FA37D bottom stop dropped
+    // white text to ~1.9:1). Lightest stop is now #1A5A45.
     return LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
+        emeraldDeep,
         emerald,
-        emeraldLight,
-        const Color(0xFF3FA37D),
+        const Color(0xFF1A5A45),
       ],
       stops: const [0.0, 0.6, 1.0],
     );

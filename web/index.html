@@ -1,74 +1,81 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="Sunni Islamic prayer times, Qibla, and authenticated adhkar - free, open source, offline-first.">
+  <meta name="description" content="Sunni Islamic prayer times, Qibla compass, and authenticated daily adhkar. Free, open source, offline-first, no tracking.">
   <meta name="theme-color" content="#1E6B52">
 
   <!--
-    Security headers (delivered via <meta http-equiv> since GitHub Pages
-    doesn't let us set HTTP response headers).
-
-    Content-Security-Policy: locks down third-party origins. The only outside
-    origin allowed is www.gstatic.com, which Flutter uses to load CanvasKit
-    (its rendering WASM blob). No analytics, ads, fonts, or tracking servers
-    are allowed.
-
-      - default-src 'self'                       same-origin only
-      - script-src + 'wasm-unsafe-eval'          Flutter inline boot + WASM compile
-      - script-src https://www.gstatic.com       CanvasKit script
-      - connect-src https://www.gstatic.com      CanvasKit WASM fetch
-      - style-src 'unsafe-inline'                Flutter injects styles inline
-      - img-src 'self' data: blob:               Flutter blob canvases
-      - font-src 'self'                          bundled Amiri only
-      - frame-ancestors 'none'                   clickjacking guard
-      - object-src 'none'                        no plugins
-      - form-action 'none'                       no form posts anywhere
+    Content-Security-Policy (defense-in-depth copy; the authoritative policy is
+    also sent as a real HTTP header from firebase.json so frame-ancestors takes
+    effect). Only third-party origins allowed are gstatic (CanvasKit WASM) and
+    fonts.gstatic (Flutter icon-font fallback). No analytics/ads/trackers.
   -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://www.gstatic.com https://fonts.gstatic.com; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; object-src 'none';">
-
-  <!-- Referrer privacy -->
   <meta name="referrer" content="strict-origin-when-cross-origin">
-
-  <!-- Disable iframing (defense in depth beyond CSP) -->
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
 
-  <!-- iOS / mobile PWA tags -->
+  <!-- iOS / mobile PWA. 'black' (opaque) reserves the status-bar strip so the
+       header isn't drawn under the notch — Flutter web ignores safe-area insets. -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Salatuk">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
+  <!-- Open Graph / Twitter card for rich link previews -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Salatuk">
+  <meta property="og:title" content="Salatuk — Prayer times, Qibla & Adhkar">
+  <meta property="og:description" content="Free, open-source Sunni prayer times, Qibla compass, and authenticated daily adhkar. Offline-first, no tracking.">
+  <meta property="og:url" content="https://salatukapp.web.app/">
+  <meta property="og:image" content="https://salatukapp.web.app/icons/Icon-512.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Salatuk — Prayer times, Qibla & Adhkar">
+  <meta name="twitter:description" content="Free, open-source Sunni prayer times, Qibla compass, and authenticated daily adhkar. Offline-first, no tracking.">
+  <meta name="twitter:image" content="https://salatukapp.web.app/icons/Icon-512.png">
+
   <title>Salatuk — Prayer times, Qibla, Adhkar</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* On-brand pre-boot background + loader so users don't see a white flash
+       while the CanvasKit WASM downloads. Flutter paints over #loading on its
+       first frame; we also remove it from JS as a belt-and-braces measure. */
+    html, body { margin: 0; height: 100%; background-color: #0E4A37; }
+    #loading {
+      position: fixed; inset: 0; display: flex; align-items: center;
+      justify-content: center; background: #0E4A37; z-index: 1;
+    }
+    #loading .spinner {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.18);
+      border-top-color: #C9A961; animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { #loading .spinner { animation: none; } }
+  </style>
 </head>
 <body>
+  <div id="loading"><div class="spinner"></div></div>
+
+  <noscript>
+    <div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0E4A37;color:#FBF8F1;font-family:sans-serif;text-align:center;padding:24px;">
+      Salatuk needs JavaScript enabled to run. Please enable it and refresh.
+    </div>
+  </noscript>
+
   <!--
-    Self-healing snippet: unregister any old Flutter service worker and
-    clear its caches. We build with --pwa-strategy=none so no new SW is
-    registered, but existing users may have a stale SW from previous
-    deploys. This runs ASAP on every visit and bypasses that.
+    Self-healing: unregister any stale Flutter service worker from previous
+    deploys and clear its caches. We build with --pwa-strategy=none, so no new
+    SW is registered; this just evicts old ones.
   -->
   <script>
     (function() {
@@ -81,8 +88,6 @@
               keys.forEach(function(k) { caches.delete(k); });
             });
           }
-          // If we just killed a stale SW, the page we're on came from its
-          // cache — reload once so we get a fresh fetch.
           if (hadOne && !sessionStorage.getItem('_swKilled')) {
             sessionStorage.setItem('_swKilled', '1');
             location.reload();
@@ -90,6 +95,11 @@
         }).catch(function() {});
       }
     })();
+    // Remove the loader once Flutter has booted its first frame.
+    window.addEventListener('flutter-first-frame', function() {
+      var el = document.getElementById('loading');
+      if (el) el.remove();
+    });
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>

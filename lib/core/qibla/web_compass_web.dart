@@ -4,6 +4,8 @@ import 'dart:js_interop_unsafe';
 
 import 'package:web/web.dart' as web;
 
+import 'compass_math.dart';
+
 /// Browser compass implementation using the `DeviceOrientationEvent` API.
 ///
 /// On iOS Safari 13+ this requires a one-time permission request which
@@ -42,10 +44,32 @@ class WebCompass {
     }
   }
 
-  /// Stream of compass headings in degrees, normalized to [0, 360).
-  /// Uses `webkitCompassHeading` (iOS — already true north) when available,
-  /// otherwise the absolute Z-axis rotation (`alpha`) from
-  /// `deviceorientationabsolute` events (Android Chrome).
+  /// Current screen rotation (0/90/180/270) from `screen.orientation.angle`.
+  /// Returns 0 if unavailable. Used to keep the heading correct in landscape.
+  static double _screenAngle() {
+    try {
+      final screen = globalContext.getProperty<JSObject?>('screen'.toJS);
+      final orient = screen?.getProperty<JSObject?>('orientation'.toJS);
+      final angleRaw = orient?.getProperty<JSAny?>('angle'.toJS);
+      if (angleRaw != null) {
+        final a = (angleRaw as JSNumber).toDartDouble;
+        if (!a.isNaN) return a;
+      }
+    } catch (_) {}
+    return 0;
+  }
+
+  /// Stream of true-north compass headings in degrees [0, 360).
+  ///
+  /// Two paths:
+  /// - **iOS Safari**: `webkitCompassHeading` is already a true-north heading
+  ///   (clockwise from north). Emit it directly.
+  /// - **Android Chrome / others**: use `alpha` ONLY from an *absolute*
+  ///   orientation event (`event.absolute == true`). The spec's `alpha` is
+  ///   counter-clockwise, so the heading is `360 − alpha` (minus the screen
+  ///   rotation). Relative `deviceorientation` frames (absolute == false) have
+  ///   an arbitrary zero and are dropped — emitting them would make the needle
+  ///   jump between two reference frames and point the wrong way.
   static Stream<double> headings() {
     late StreamController<double> controller;
     late JSFunction handlerJs;
@@ -53,28 +77,30 @@ class WebCompass {
     void handler(web.Event event) {
       final jsEvent = event as JSObject;
 
-      // iOS: webkitCompassHeading is already corrected to true north.
+      // iOS path: webkitCompassHeading is true-north corrected by the OS.
       final wkRaw = jsEvent.getProperty<JSAny?>('webkitCompassHeading'.toJS);
       if (wkRaw != null) {
         final h = (wkRaw as JSNumber).toDartDouble;
-        if (!h.isNaN) {
-          controller.add(_normalize(h));
+        if (!h.isNaN && h >= 0) {
+          controller.add(CompassMath.normalize(h));
           return;
         }
       }
 
-      // Android Chrome `deviceorientationabsolute`: in modern Chrome (and
-      // most Chromium-derived browsers, which is the vast majority of
-      // Android web users) `alpha` is the compass heading directly —
-      // degrees CLOCKWISE from north — NOT W3C-spec CCW. The previous
-      // `360 - alpha` was correct only for spec-compliant browsers
-      // (Firefox) and inverted the heading on every Chrome user, causing
-      // Qibla errors that scale with how far the user faces from north.
+      // Non-iOS path: only trust ABSOLUTE orientation events. A relative
+      // event's alpha is referenced to wherever the sensor happened to start,
+      // not to north — using it would yield a confidently-wrong Qibla.
+      final absRaw = jsEvent.getProperty<JSAny?>('absolute'.toJS);
+      final isAbsolute = absRaw != null && (absRaw as JSBoolean).toDart;
+      if (!isAbsolute) return;
+
       final alphaRaw = jsEvent.getProperty<JSAny?>('alpha'.toJS);
       if (alphaRaw != null) {
         final alpha = (alphaRaw as JSNumber).toDartDouble;
         if (!alpha.isNaN) {
-          controller.add(_normalize(alpha));
+          controller.add(
+            CompassMath.headingFromAlpha(alpha, screenAngle: _screenAngle()),
+          );
         }
       }
     }
@@ -82,6 +108,11 @@ class WebCompass {
     controller = StreamController<double>.broadcast(
       onListen: () {
         handlerJs = handler.toJS;
+        // 'deviceorientationabsolute' is the Chromium absolute event; plain
+        // 'deviceorientation' is also registered because (a) iOS delivers
+        // webkitCompassHeading on it, and (b) a few browsers set
+        // absolute==true on the plain event. The absolute gate above ensures
+        // only true-north frames are ever emitted regardless of event name.
         web.window.addEventListener('deviceorientationabsolute', handlerJs);
         web.window.addEventListener('deviceorientation', handlerJs);
       },
@@ -91,11 +122,5 @@ class WebCompass {
       },
     );
     return controller.stream;
-  }
-
-  static double _normalize(double deg) {
-    var d = deg % 360;
-    if (d < 0) d += 360;
-    return d;
   }
 }

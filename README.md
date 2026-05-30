@@ -3,11 +3,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Android](https://github.com/salatukapp/salatukapp.github.io/actions/workflows/android-release.yml/badge.svg)](https://github.com/salatukapp/salatukapp.github.io/actions/workflows/android-release.yml)
 [![Web](https://github.com/salatukapp/salatukapp.github.io/actions/workflows/web-deploy.yml/badge.svg)](https://github.com/salatukapp/salatukapp.github.io/actions/workflows/web-deploy.yml)
-[![Try it](https://img.shields.io/badge/try%20it-omarkaaki.me%2Fsalatuk-blue)](https://salatukapp.github.io/)
+[![Try it](https://img.shields.io/badge/try%20it-salatukapp.web.app-blue)](https://salatukapp.web.app/)
 
 A free, open-source Sunni Islamic companion app for daily prayers, Qibla direction, and authenticated adhkar. Offline-first, no tracking, no ads, no accounts.
 
-**Live web app:** https://salatukapp.github.io/
+**Live web app:** https://salatukapp.web.app/
 **Android APK:** [Latest release](https://github.com/salatukapp/salatukapp.github.io/releases/latest)
 **Package id:** `com.salatuk.salatuk`
 **Platforms:** Android, Web (PWA). iOS via PWA only — see [Distribution](#distribution) below.

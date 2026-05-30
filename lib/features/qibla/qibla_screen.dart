@@ -271,12 +271,20 @@ class _CompassView extends StatefulWidget {
 
 class _CompassViewState extends State<_CompassView> {
   double _smoothedHeading = 0;
+  bool _hasReading = false;
 
   @override
   void didUpdateWidget(_CompassView old) {
     super.didUpdateWidget(old);
     final r = widget.reading;
     if (r != null) {
+      // Snap to the very first reading instead of lerping from North — avoids
+      // a visible ~180° swing when the user first faces south.
+      if (!_hasReading) {
+        _smoothedHeading = r.trueHeading;
+        _hasReading = true;
+        return;
+      }
       var delta = r.trueHeading - _smoothedHeading;
       if (delta > 180) delta -= 360;
       if (delta < -180) delta += 360;
@@ -295,6 +303,21 @@ class _CompassViewState extends State<_CompassView> {
     final heading = reading != null ? _smoothedHeading : 0.0;
     final rotation = -heading * math.pi / 180;
     final qiblaRotation = (widget.bearing - heading) * math.pi / 180;
+
+    // Respect "Reduce Motion" (iOS) / "Remove animations" (Android) — the
+    // continuously-rotating dial is a known vestibular trigger.
+    final reduceMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    final rotateDur = reduceMotion ? Duration.zero : const Duration(milliseconds: 350);
+    final glowDur = reduceMotion ? Duration.zero : const Duration(milliseconds: 600);
+
+    final instruction = reading == null
+        ? 'Acquiring compass…'
+        : isFacing
+            ? 'Facing Qibla'
+            : isNear
+                ? 'Almost there'
+                : 'Turn ${reading.deltaToQibla.abs().toStringAsFixed(0)}°'
+                    '${reading.deltaToQibla > 0 ? " right" : " left"}';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -315,8 +338,14 @@ class _CompassViewState extends State<_CompassView> {
             child: Center(
               child: AspectRatio(
                 aspectRatio: 1,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 600),
+                child: Semantics(
+                  container: true,
+                  liveRegion: true,
+                  label: 'Qibla compass',
+                  value: instruction,
+                  child: ExcludeSemantics(
+                  child: AnimatedContainer(
+                  duration: glowDur,
                   curve: Curves.easeOutCubic,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
@@ -329,13 +358,13 @@ class _CompassViewState extends State<_CompassView> {
                     children: [
                       AnimatedRotation(
                         turns: rotation / (2 * math.pi),
-                        duration: const Duration(milliseconds: 350),
+                        duration: rotateDur,
                         curve: Curves.easeOutCubic,
                         child: CustomPaint(size: Size.infinite, painter: _CompassDialPainter()),
                       ),
                       AnimatedRotation(
                         turns: qiblaRotation / (2 * math.pi),
-                        duration: const Duration(milliseconds: 350),
+                        duration: rotateDur,
                         curve: Curves.easeOutCubic,
                         child: CustomPaint(size: Size.infinite, painter: _QiblaArrowPainter(tint)),
                       ),
@@ -343,7 +372,7 @@ class _CompassViewState extends State<_CompassView> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 250),
+                            duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 250),
                             child: Icon(
                               isFacing ? Icons.check_circle : Icons.navigation_rounded,
                               key: ValueKey(isFacing),
@@ -365,6 +394,8 @@ class _CompassViewState extends State<_CompassView> {
                       ),
                     ],
                   ),
+                ),
+                ),
                 ),
               ),
             ),
@@ -515,8 +546,10 @@ class _AccuracyPanel extends StatelessWidget {
   });
 
   Future<void> _openIslamicFinder() async {
-    final uri = Uri.parse(
-        'https://www.islamicfinder.org/world/qibla/?latitude=$latitude&longitude=$longitude');
+    // Open the bare URL (no lat/lng query params) so we don't transmit the
+    // user's exact coordinates to a third party — IslamicFinder geolocates
+    // itself, and this keeps the "nothing leaves your device" promise intact.
+    final uri = Uri.parse('https://www.islamicfinder.org/world/qibla/');
     if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 
@@ -549,7 +582,7 @@ class _AccuracyPanel extends StatelessWidget {
             Text('How Qibla is computed',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
-            Text('Every value below is local to your device. Nothing is sent over the network.',
+            Text('Every value below is computed on your device. Your location is never transmitted anywhere.',
                 style: TextStyle(color: cs.outline, fontSize: 12, height: 1.5)),
             const SizedBox(height: 20),
 

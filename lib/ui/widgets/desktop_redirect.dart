@@ -35,7 +35,7 @@ class _DesktopRedirectState extends State<DesktopRedirect> with SingleTickerProv
   }
 
   Future<void> _copyLink() async {
-    await Clipboard.setData(const ClipboardData(text: 'https://salatukapp.github.io/'));
+    await Clipboard.setData(const ClipboardData(text: 'https://salatukapp.web.app/'));
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -271,10 +271,13 @@ class _ResponsiveGateState extends State<ResponsiveGate> {
   @override
   Widget build(BuildContext context) {
     final isWebBrowser = kIsWeb;
-    final width = MediaQuery.of(context).size.width;
-    final isWide = width >= 720;
+    // Gate on shortestSide, NOT width: a large iPhone in landscape is >720px
+    // wide and would wrongly get the desktop screen. shortestSide stays ~430
+    // on any phone in either orientation, while tablets/desktops are >= 600.
+    final shortest = MediaQuery.of(context).size.shortestSide;
+    final isDesktopClass = shortest >= 600;
 
-    if (isWebBrowser && isWide && !_bypassed) {
+    if (isWebBrowser && isDesktopClass && !_bypassed) {
       return DesktopRedirect(onContinueAnyway: () => setState(() => _bypassed = true));
     }
     return widget.child;

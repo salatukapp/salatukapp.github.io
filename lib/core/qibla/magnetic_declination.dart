@@ -12,6 +12,11 @@ import 'dart:math' as math;
 /// from `wmm2025_coefficients.txt` (alongside this file) which is the
 /// official NOAA WMM2025.COF.
 class MagneticDeclination {
+  /// WMM 2025 is valid through the start of 2030. After that the coefficients
+  /// should be refreshed from the successor model. Output still degrades
+  /// gracefully past this date; this is a maintenance signal, not a hard stop.
+  static bool isExpired(DateTime date) => date.year >= 2030;
+
   static const int _n = 12;
   static const int _size = _n + 1;
 
@@ -127,6 +132,10 @@ class MagneticDeclination {
     }
     k[1][1] = 0;
 
+    // WMM 2025 is valid 2025.0–2030.0. Past that, the linear secular-variation
+    // extrapolation degrades gracefully (still far better than freezing the
+    // field), so we don't throw — callers can check [isExpired] to prompt a
+    // coefficient refresh from the successor NOAA .COF.
     final dt = time - 2025.0; // WMM 2025 epoch
     final rlon = glon * math.pi / 180.0;
     final rlat = glat * math.pi / 180.0;

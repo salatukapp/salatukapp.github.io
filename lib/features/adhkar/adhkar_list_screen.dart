@@ -59,6 +59,7 @@ class _AdhkarListScreenState extends State<AdhkarListScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_rounded),
+                    tooltip: 'Back',
                     onPressed: () => Navigator.pop(context),
                   ),
                   Expanded(
@@ -237,12 +238,16 @@ class _DhikrCardState extends State<_DhikrCard> with SingleTickerProviderStateMi
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Directionality(
+                  Semantics(
+                    label: widget.entry.arabic,
                     textDirection: TextDirection.rtl,
-                    child: Text(
-                      widget.entry.arabic,
-                      style: AppTheme.arabicBody,
-                      textAlign: TextAlign.right,
+                    child: Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Text(
+                        widget.entry.arabic,
+                        style: AppTheme.arabicBody,
+                        textAlign: TextAlign.right,
+                      ),
                     ),
                   ),
                   if (widget.entry.transliteration.isNotEmpty) ...[

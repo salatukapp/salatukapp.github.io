@@ -38,6 +38,7 @@ class _AdhkarCategoriesScreenState extends State<AdhkarCategoriesScreen> with Si
         _ctrl.forward();
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = 'Could not load adhkar: $e');
     }
   }

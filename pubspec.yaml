@@ -1,7 +1,7 @@
 name: salatuk
 description: "Sunni Islamic prayer times, Qibla, and authenticated adhkar - free, open source, offline-first."
 publish_to: 'none'
-version: 0.1.4+5
+version: 0.2.0+6
 
 environment:
   sdk: ^3.12.0
@@ -43,10 +43,24 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.1
+
+# Branded launcher/favicon/PWA icons. Run: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icons/icon.png"
+  android: true
+  ios: false
+  remove_alpha_ios: true
+  adaptive_icon_background: "#0E4A37"
+  adaptive_icon_foreground: "assets/icons/icon_foreground.png"
+  web:
+    generate: true
+    image_path: "assets/icons/icon.png"
+    background_color: "#0E4A37"
+    theme_color: "#1E6B52"
 
 flutter:
   uses-material-design: true
-  generate: true   # generate l10n classes from .arb files
 
   assets:
     - assets/adhkar/
@@ -58,3 +72,6 @@ flutter:
         - asset: assets/fonts/Amiri-Regular.ttf
         - asset: assets/fonts/Amiri-Bold.ttf
           weight: 700
+    - family: AmiriQuran
+      fonts:
+        - asset: assets/fonts/AmiriQuran.ttf

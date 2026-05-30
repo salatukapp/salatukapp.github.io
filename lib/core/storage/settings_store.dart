@@ -16,6 +16,11 @@ class Settings {
   final String? manualCityLabel;
   final bool autoDetectMethod;
 
+  /// True once the user has opted into GPS on the first-run screen. Stored
+  /// separately from manualLatitude (which is a FROZEN override that disables
+  /// live GPS) so the first-run chooser isn't shown again on every cold start.
+  final bool gpsChosen;
+
   const Settings({
     this.method = SunniMethod.karachi,
     this.madhab = adhan.Madhab.shafi,
@@ -27,6 +32,7 @@ class Settings {
     this.manualLongitude,
     this.manualCityLabel,
     this.autoDetectMethod = true,
+    this.gpsChosen = false,
   });
 
   Settings copyWith({
@@ -40,6 +46,7 @@ class Settings {
     double? manualLongitude,
     String? manualCityLabel,
     bool? autoDetectMethod,
+    bool? gpsChosen,
     bool clearManualLocation = false,
   }) {
     return Settings(
@@ -59,6 +66,7 @@ class Settings {
           ? null
           : (manualCityLabel ?? this.manualCityLabel),
       autoDetectMethod: autoDetectMethod ?? this.autoDetectMethod,
+      gpsChosen: gpsChosen ?? this.gpsChosen,
     );
   }
 }
@@ -76,6 +84,7 @@ class SettingsStore {
   static const _kManLng = 'loc.manLng';
   static const _kManCity = 'loc.manCity';
   static const _kAutoDetect = 'method.auto';
+  static const _kGpsChosen = 'loc.gpsChosen';
 
   Future<Settings> load() async {
     final p = await SharedPreferences.getInstance();
@@ -93,6 +102,7 @@ class SettingsStore {
       manualLongitude: p.getDouble(_kManLng),
       manualCityLabel: p.getString(_kManCity),
       autoDetectMethod: p.getBool(_kAutoDetect) ?? true,
+      gpsChosen: p.getBool(_kGpsChosen) ?? false,
     );
   }
 
@@ -116,6 +126,7 @@ class SettingsStore {
       }
     }
     await p.setBool(_kAutoDetect, s.autoDetectMethod);
+    await p.setBool(_kGpsChosen, s.gpsChosen);
   }
 
   ThemePreference _decodeTheme(String? raw) {
