@@ -14,27 +14,30 @@
     ],
     "headers": [
       {
-        "source": "flutter_service_worker.js",
-        "headers": [
-          {"key": "Cache-Control", "value": "no-cache, no-store, must-revalidate"}
-        ]
-      },
-      {
-        "source": "**/*.@(js|css|woff2|ttf|otf|json|wasm)",
-        "headers": [
-          {"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}
-        ]
-      },
-      {
-        "source": "**/*.html",
+        "comment": "Security headers on EVERY path. Firebase matches header globs against the REQUEST path, not the rewritten file — so the root '/' and SPA routes need '**', not '**/*.html'. Cache-Control here defaults documents to no-cache; the asset block below overrides it for fingerprinted static files.",
+        "source": "**",
         "headers": [
           {"key": "Cache-Control", "value": "no-cache"},
           {"key": "X-Content-Type-Options", "value": "nosniff"},
           {"key": "X-Frame-Options", "value": "DENY"},
           {"key": "Referrer-Policy", "value": "strict-origin-when-cross-origin"},
-          {"key": "Permissions-Policy", "value": "geolocation=(self), accelerometer=(self), magnetometer=(self), gyroscope=(self), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()"},
+          {"key": "Permissions-Policy", "value": "geolocation=(self), accelerometer=(self), magnetometer=(self), gyroscope=(self), microphone=(), camera=(), payment=(), usb=()"},
           {"key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload"},
           {"key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://www.gstatic.com https://fonts.gstatic.com; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; object-src 'none'"}
+        ]
+      },
+      {
+        "comment": "Fingerprinted static assets can be cached forever (overrides the no-cache above because this block is listed later).",
+        "source": "**/*.@(js|css|woff2|ttf|otf|json|wasm|png|jpg|jpeg|svg|ico)",
+        "headers": [
+          {"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}
+        ]
+      },
+      {
+        "comment": "Service worker must never be cached.",
+        "source": "flutter_service_worker.js",
+        "headers": [
+          {"key": "Cache-Control", "value": "no-cache, no-store, must-revalidate"}
         ]
       }
     ]
