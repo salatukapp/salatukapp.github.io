@@ -28,7 +28,7 @@ The "Agree?" column uses:
 | 2 | **ISNA** | Islamic Society of North America | 15.0° | 15.0° | North America (USA, Canada) | OK |
 | 5 | **Egyptian** | Egyptian General Authority of Survey | 19.5° | 17.5° | Egypt and most of Africa | OK (see WARNING below for Fajr — some sources cite 20°/18°) |
 | 4 | **UmmAlQura** | Umm al-Qura University, Makkah | 18.5° | 90 min after Maghrib (120 min in Ramadan) | Saudi Arabia | OK |
-| 1 | **Karachi** | University of Islamic Sciences, Karachi | 18.0° | 18.0° | Pakistan, Bangladesh, India, Afghanistan | OK |
+| 1 | _removed from app_ | _(method removed)_ | — | — | — | — |
 | 9 | **Kuwait** | Kuwait | 18.0° | 17.5° | Kuwait | OK |
 | 10 | **Qatar** | Qatar (modified Umm al-Qura) | 18.0° | 90 min after Maghrib | Qatar | OK |
 | 11 | **Singapore** | Majlis Ugama Islam Singapura (MUIS) | 20.0° | 18.0° | Singapore | OK |
@@ -86,13 +86,13 @@ At latitudes above ~48–55° in summer, true twilight may never reach the Fajr/
 | **None** | Use the raw angle-based calculation regardless | Tropical/temperate latitudes; method default |
 | **MiddleOfTheNight** | Fajr/Isha fall at the midpoint of the night (sunset → sunrise period halved) | Conservative fallback; recommended by Adhan library for _removed_ & ISNA at high latitudes |
 | **OneSeventh** | The night is split into 7 equal parts; Isha begins after the first 1/7 from sunset, Fajr begins at the start of the last 1/7 before sunrise | Common Hanafi-leaning choice |
-| **AngleBased** | The portion of the night allotted to Fajr/Isha is proportional to the method's twilight angles (`α/60` of the night) | Recommended for Karachi, Egyptian, and _removed_ methods; closest to true-twilight |
+| **AngleBased** | The portion of the night allotted to Fajr/Isha is proportional to the method's twilight angles (`α/60` of the night) | Recommended for the deeper-angle methods; closest to true-twilight |
 | **Twilight Angle / Seasonal (Moonsighting Committee)** | Uses Khalid Shaukat's seasonal correction tables based on date and latitude | Used exclusively with the MoonsightingCommittee method |
 
 **Library defaults** (from `batoulapps/adhan-java`):
 - _removed_ → high-latitude rule defaults to `MiddleOfTheNight` if observer is above ~48°
 - ISNA → `MiddleOfTheNight`
-- Karachi → `MiddleOfTheNight`
+- (Karachi method removed from the app)
 - MoonsightingCommittee → has its own `SeasonAdjustedMethods` flag instead
 - Egyptian, UmmAlQura, Dubai, Qatar, Kuwait, Singapore → no built-in high-lat rule; the app should default to `MiddleOfTheNight` for users above 48° N/S
 
@@ -111,7 +111,7 @@ Source for these recommendations: cross-reference of (a) Aladhan's per-country d
 | Tunisia | Tunisia (ID 18) | C |
 | Algeria | Algeria (ID 19) | C |
 | Morocco | Morocco (ID 21) | C |
-| Pakistan, Bangladesh, India, Afghanistan | Karachi | A, B, C |
+| Pakistan, Bangladesh, India, Afghanistan | (Karachi method removed — app falls back to Moonsighting Committee) | — |
 | Turkey | Turkey/Diyanet (ID 13) | C (with the caveat noted above) |
 | Singapore | Singapore/MUIS | A, B, C |
 | Malaysia | JAKIM (ID 17) — Fajr 20°, Isha 18° | C |
@@ -578,7 +578,7 @@ Recited just before sleeping, in roughly this order:
 - This is the most directly aligned port of the official `batoulapps/adhan-js` library, ported to Dart while preserving the calculation logic verbatim.
 - It is **not officially endorsed by Batoula Apps** (Batoula Apps maintain Swift, JavaScript, Java, and C# directly; the Dart port is community-maintained by `iamriajul` at https://github.com/iamriajul/adhan-dart but listed in the Adhan README as a recognized "additional implementation").
 - License: MIT. No native dependencies (pure Dart). Compatible with Flutter and pure Dart.
-- Implements: all calculation methods (_removed_, ISNA, Egyptian, UmmAlQura, Karachi, Kuwait, Qatar, Singapore, Turkey, MoonsightingCommittee, Dubai, Tunisia, etc.), Madhab.SHAFI / Madhab.HANAFI Asr rule, HighLatitudeRule.None / MiddleOfTheNight / SeventhOfTheNight / TwilightAngle, PrayerAdjustments (tune individual prayers), and PolarCircleResolution for above-Arctic.
+- Implements: all calculation methods (_removed_, ISNA, Egyptian, UmmAlQura, Kuwait, Qatar, Singapore, Turkey, MoonsightingCommittee, Dubai, Tunisia, etc.), Madhab.SHAFI / Madhab.HANAFI Asr rule, HighLatitudeRule.None / MiddleOfTheNight / SeventhOfTheNight / TwilightAngle, PrayerAdjustments (tune individual prayers), and PolarCircleResolution for above-Arctic.
 - Verify current version on pub.dev at integration time (this changes; check https://pub.dev/packages/adhan_dart/versions). Use a `^` constraint to receive non-breaking updates.
 
 WARNING — There is also an older package called simply `adhan` (https://pub.dev/packages/adhan) at version 2.0.0+1 by `riajul.dev` — same maintainer, predecessor. It is older (2 years since update). **Prefer `adhan_dart`** (more recent maintenance, same upstream).

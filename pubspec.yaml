@@ -1,7 +1,7 @@
 name: salatuk
 description: "Sunni Islamic prayer times, Qibla, and authenticated adhkar - free, open source, offline-first."
 publish_to: 'none'
-version: 0.2.0+6
+version: 0.2.1+7
 
 environment:
   sdk: ^3.12.0

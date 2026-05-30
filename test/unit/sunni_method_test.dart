@@ -24,8 +24,13 @@ void main() {
       }
     });
 
-    test('fromCode returns Karachi for unknown codes', () {
-      expect(SunniMethod.fromCode('XXX'), equals(SunniMethod.karachi));
+    test('fromCode returns Moonsighting Committee for unknown codes', () {
+      expect(SunniMethod.fromCode('XXX'), equals(SunniMethod.moonsightingCommittee));
+    });
+
+    test('Karachi method is removed', () {
+      expect(SunniMethod.values.any((m) => m.code == 'KAR'), isFalse);
+      expect(SunniMethod.values.any((m) => m.displayName.contains('Karachi')), isFalse);
     });
 
     test('Umm al-Qura uses 90 min Isha interval', () {
@@ -34,8 +39,8 @@ void main() {
       expect(p.ishaInterval, 90);
     });
 
-    test('Karachi uses 18°/18°', () {
-      final p = SunniMethod.karachi.toAdhanParameters();
+    test('Moonsighting Committee uses 18°/18°', () {
+      final p = SunniMethod.moonsightingCommittee.toAdhanParameters();
       expect(p.fajrAngle, 18);
       expect(p.ishaAngle, 18);
     });

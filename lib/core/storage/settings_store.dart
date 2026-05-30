@@ -22,7 +22,7 @@ class Settings {
   final bool gpsChosen;
 
   const Settings({
-    this.method = SunniMethod.karachi,
+    this.method = SunniMethod.moonsightingCommittee,
     this.madhab = adhan.Madhab.shafi,
     this.notificationsEnabled = true,
     this.preNotificationMinutes = 0,
@@ -90,7 +90,7 @@ class SettingsStore {
     final p = await SharedPreferences.getInstance();
     return Settings(
       method: SunniMethod.fromCode(
-          p.getString(_kMethod) ?? SunniMethod.karachi.code),
+          p.getString(_kMethod) ?? SunniMethod.moonsightingCommittee.code),
       madhab: (p.getString(_kMadhab) ?? 'shafi') == 'hanafi'
           ? adhan.Madhab.hanafi
           : adhan.Madhab.shafi,

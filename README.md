@@ -15,7 +15,7 @@ A free, open-source Sunni Islamic companion app for daily prayers, Qibla directi
 
 ## Features
 
-- **Five daily prayer times** — Calculated locally using astronomical methods recognized by major Sunni authorities. Supports ISNA, Umm al-Qura, Karachi, Kuwait, Qatar, Singapore, Turkey (Diyanet), and MoonsightingCommittee methods (plus other regional options). Auto-detects a sensible default based on your region. Asr juristic rule selectable (Standard / Hanafi).
+- **Five daily prayer times** — Calculated locally using astronomical methods recognized by major Sunni authorities. Supports ISNA, Umm al-Qura, Kuwait, Qatar, Singapore, Turkey (Diyanet), and MoonsightingCommittee methods (plus other regional options). Auto-detects a sensible default based on your region. Asr juristic rule selectable (Standard / Hanafi).
 - **Qibla compass** — Great-circle bearing to the Kaaba (21.4225°N, 39.8262°E) using device GPS + magnetometer. Includes calibration prompts and a map fallback.
 - **Authenticated daily adhkar** — Morning, evening, after-prayer, and before-sleep remembrances sourced from Hisn al-Muslim, Imam al-Nawawi's Al-Adhkar, and primary hadith collections. Each dhikr includes Arabic text, transliteration, English translation, repetition count, and hadith citation.
 - **Local notifications** — Optional prayer time alerts scheduled on-device. No server, no push.

@@ -15,12 +15,6 @@ enum SunniMethod {
     arabicName: 'أم القرى',
     summary: 'Fajr 18.5°, Isha 90 min after Maghrib. Standard in Saudi Arabia.',
   ),
-  karachi(
-    code: 'KAR',
-    displayName: 'University of Karachi',
-    arabicName: 'جامعة العلوم الإسلامية بكراتشي',
-    summary: 'Fajr 18°, Isha 18°. Used in Pakistan, India, Bangladesh, Afghanistan.',
-  ),
   moonsightingCommittee(
     code: 'MSC',
     displayName: 'Moonsighting Committee',
@@ -131,8 +125,6 @@ enum SunniMethod {
         return adhan.CalculationMethodParameters.northAmerica();
       case SunniMethod.ummAlQura:
         return adhan.CalculationMethodParameters.ummAlQura();
-      case SunniMethod.karachi:
-        return adhan.CalculationMethodParameters.karachi();
       case SunniMethod.moonsightingCommittee:
         return adhan.CalculationMethodParameters.moonsightingCommittee();
       case SunniMethod.kuwait:
@@ -169,7 +161,7 @@ enum SunniMethod {
   static SunniMethod fromCode(String code) {
     return SunniMethod.values.firstWhere(
       (m) => m.code == code,
-      orElse: () => SunniMethod.karachi,
+      orElse: () => SunniMethod.moonsightingCommittee,
     );
   }
 }

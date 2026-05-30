@@ -18,17 +18,17 @@ void main() {
       );
     });
 
-    test('Egypt → Karachi (regional default after removals)', () {
+    test('Egypt → Moonsighting (regional default after removals)', () {
       expect(
         RegionDetector.recommendedMethod(latitude: 30.0444, longitude: 31.2357), // Cairo
-        equals(SunniMethod.karachi),
+        equals(SunniMethod.moonsightingCommittee),
       );
     });
 
-    test('Pakistan → Karachi', () {
+    test('Pakistan → Moonsighting (Karachi method removed)', () {
       expect(
-        RegionDetector.recommendedMethod(latitude: 24.8607, longitude: 67.0011), // Karachi
-        equals(SunniMethod.karachi),
+        RegionDetector.recommendedMethod(latitude: 24.8607, longitude: 67.0011), // Karachi city
+        equals(SunniMethod.moonsightingCommittee),
       );
     });
 
@@ -74,10 +74,10 @@ void main() {
       );
     });
 
-    test('Pacific Ocean (no match) → Karachi fallback', () {
+    test('Pacific Ocean (no match) → Moonsighting fallback', () {
       expect(
         RegionDetector.recommendedMethod(latitude: 0, longitude: -160),
-        equals(SunniMethod.karachi),
+        equals(SunniMethod.moonsightingCommittee),
       );
     });
   });

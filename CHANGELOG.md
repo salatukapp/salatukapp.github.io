@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.1] — 2026-05-26
+
+- Removed the "University of Karachi" calculation method from the app. No replacement method was added to the list. Internal fallback/default now resolves to Moonsighting Committee (which shares the same 18° Fajr, so computed times for affected regions are essentially unchanged). The city of Karachi remains available as a manual location.
+
 ## [0.2.0] — 2026-05-26
 
 A 57-agent adversarial audit (7 dimensions: logic, layout, iPhone-Safari, Android, security, web standards, accessibility) found 39 confirmed issues. All critical/high and most medium/low are fixed in this release.
@@ -84,7 +88,7 @@ A 57-agent adversarial audit (7 dimensions: logic, layout, iPhone-Safari, Androi
 Initial release.
 
 ### Prayer times
-- Multiple Sunni calculation methods: ISNA, Umm al-Qura, Karachi, Singapore, Türkiye (Diyanet), Moonsighting Committee, Dubai, Algerian, Tunisia, Morocco, Jordan, Gulf Region, Portugal, France (UOIF), Russia, Indonesia, Kuwait, Qatar
+- Multiple Sunni calculation methods: ISNA, Umm al-Qura, Singapore, Türkiye (Diyanet), Moonsighting Committee, Dubai, Algerian, Tunisia, Morocco, Jordan, Gulf Region, Portugal, France (UOIF), Russia, Indonesia, Kuwait, Qatar
 - Asr juristic rule selector (Standard / Hanafi)
 - Region-based auto-detection of the appropriate method, with manual override
 - Umm al-Qura: automatic +30 min Isha adjustment during Ramadan

@@ -50,7 +50,7 @@ class RegionDetector {
 
     // Egypt + Sudan + Libya + Levant
     if (_inBox(lat, lng, latMin: 15, latMax: 37, lngMin: 24, lngMax: 39)) {
-      return SunniMethod.karachi;
+      return SunniMethod.moonsightingCommittee;
     }
 
     // Morocco
@@ -71,7 +71,7 @@ class RegionDetector {
 
     // Pakistan, India, Bangladesh, Afghanistan, Sri Lanka
     if (_inBox(lat, lng, latMin: 5, latMax: 38, lngMin: 60, lngMax: 95)) {
-      return SunniMethod.karachi;
+      return SunniMethod.moonsightingCommittee;
     }
 
     // Singapore + immediate surroundings — must come before the wider
@@ -110,8 +110,8 @@ class RegionDetector {
       return SunniMethod.moonsightingCommittee;
     }
 
-    // Fallback
-    return SunniMethod.karachi;
+    // Fallback (neutral global default).
+    return SunniMethod.moonsightingCommittee;
   }
 
   static bool _inBox(
