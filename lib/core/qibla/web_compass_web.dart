@@ -44,21 +44,6 @@ class WebCompass {
     }
   }
 
-  /// Current screen rotation (0/90/180/270) from `screen.orientation.angle`.
-  /// Returns 0 if unavailable. Used to keep the heading correct in landscape.
-  static double _screenAngle() {
-    try {
-      final screen = globalContext.getProperty<JSObject?>('screen'.toJS);
-      final orient = screen?.getProperty<JSObject?>('orientation'.toJS);
-      final angleRaw = orient?.getProperty<JSAny?>('angle'.toJS);
-      if (angleRaw != null) {
-        final a = (angleRaw as JSNumber).toDartDouble;
-        if (!a.isNaN) return a;
-      }
-    } catch (_) {}
-    return 0;
-  }
-
   /// Stream of true-north compass headings in degrees [0, 360).
   ///
   /// Two paths:
@@ -66,10 +51,17 @@ class WebCompass {
   ///   (clockwise from north). Emit it directly.
   /// - **Android Chrome / others**: use `alpha` ONLY from an *absolute*
   ///   orientation event (`event.absolute == true`). The spec's `alpha` is
-  ///   counter-clockwise, so the heading is `360 − alpha` (minus the screen
-  ///   rotation). Relative `deviceorientation` frames (absolute == false) have
-  ///   an arbitrary zero and are dropped — emitting them would make the needle
-  ///   jump between two reference frames and point the wrong way.
+  ///   counter-clockwise, so the heading is `360 − alpha`. Relative
+  ///   `deviceorientation` frames (absolute == false) have an arbitrary zero
+  ///   and are dropped — emitting them would make the needle jump between two
+  ///   reference frames and point the wrong way.
+  ///
+  /// We intentionally do NOT compensate for `screen.orientation.angle`: doing
+  /// so caused the heading to jump 90° the moment a phone auto-rotated (the
+  /// angle flips 0→90). A Qibla compass is held upright in portrait, so we
+  /// assume the natural orientation and tell the user to hold the phone flat
+  /// and upright. The exact great-circle bearing (the number) is always shown
+  /// regardless and never moves.
   static Stream<double> headings() {
     late StreamController<double> controller;
     late JSFunction handlerJs;
@@ -98,9 +90,7 @@ class WebCompass {
       if (alphaRaw != null) {
         final alpha = (alphaRaw as JSNumber).toDartDouble;
         if (!alpha.isNaN) {
-          controller.add(
-            CompassMath.headingFromAlpha(alpha, screenAngle: _screenAngle()),
-          );
+          controller.add(CompassMath.headingFromAlpha(alpha));
         }
       }
     }

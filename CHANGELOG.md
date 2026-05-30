@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.2] — 2026-05-31
+
+### Fixes the recurring "still broken after deploy" problem
+- **Root cause of stale content:** `main.dart.js` / `flutter_bootstrap.js` were cached `immutable` for 1 year, but Flutter web doesn't content-hash them — so returning visitors were frozen on old app code (this is why "University of Karachi" still showed for users even after it was removed server-side). Cache headers are now `no-cache, must-revalidate`: the browser keeps a copy but always revalidates (cheap 304 when unchanged, fresh on every deploy). Stale builds can no longer get stuck.
+
+### Faster, smoother boot
+- CanvasKit (Flutter's renderer) is now **bundled and served same-origin** (`--no-web-resources-cdn`) instead of fetched from `gstatic.com` at startup — removes a cross-origin round trip that was slow on poor links.
+- Branded loading spinner shows immediately (no blank/white flash).
+- Service-worker cleanup only triggers a one-time reload when an old SW is actually controlling the page, eliminating a spurious reload "glitch" on load.
+
+### Qibla 90° shift fixed
+- Removed the `screen.orientation.angle` compensation added in 0.2.0: when a phone auto-rotated, the angle flipped 0→90 and the heading jumped exactly 90°. The compass now assumes the natural (portrait) orientation — how a Qibla compass is held — and the exact great-circle bearing (the number) is always shown and never moves. iOS keeps using the OS-corrected `webkitCompassHeading`.
+
+### Notifications removed on web
+- The notifications section is hidden on the web app (browsers can't schedule background prayer alarms). It remains functional on the native Android APK.
+
 ## [0.2.1] — 2026-05-26
 
 - Removed the "University of Karachi" calculation method from the app. No replacement method was added to the list. Internal fallback/default now resolves to Moonsighting Committee (which shares the same 18° Fajr, so computed times for affected regions are essentially unchanged). The city of Karachi remains available as a manual location.

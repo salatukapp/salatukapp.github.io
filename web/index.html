@@ -80,15 +80,19 @@
   <script>
     (function() {
       if ('serviceWorker' in navigator) {
+        // Only the page being actively CONTROLLED by an old service worker can
+        // serve stale content — that's the only case worth a one-time reload.
+        // A mere leftover registration (not controlling) needs no reload, which
+        // avoids a visible flash/glitch on load.
+        var controlled = !!navigator.serviceWorker.controller;
         navigator.serviceWorker.getRegistrations().then(function(regs) {
-          var hadOne = regs.length > 0;
           regs.forEach(function(r) { r.unregister(); });
           if ('caches' in window) {
             caches.keys().then(function(keys) {
               keys.forEach(function(k) { caches.delete(k); });
-            });
+            }).catch(function() {});
           }
-          if (hadOne && !sessionStorage.getItem('_swKilled')) {
+          if (controlled && !sessionStorage.getItem('_swKilled')) {
             sessionStorage.setItem('_swKilled', '1');
             location.reload();
           }

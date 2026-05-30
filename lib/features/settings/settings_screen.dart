@@ -1,4 +1,5 @@
 import 'package:adhan_dart/adhan_dart.dart' as adhan;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -73,6 +74,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 : 'Standard (Shafi\'i / Maliki / Hanbali — shadow = 1× object length)'),
             onTap: _pickMadhab,
           ),
+          // Local notifications only fire on the native Android app, never on
+          // the website (browsers can't schedule background alarms). Hide the
+          // whole section on web so users aren't shown a feature that can't work.
+          if (!kIsWeb) ...[
           const _SectionHeader('Notifications'),
           SwitchListTile(
             title: const Text('Athan notifications'),
@@ -119,6 +124,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ));
             },
           ),
+          ],
           const _SectionHeader('Appearance'),
           ListTile(
             title: const Text('Theme'),

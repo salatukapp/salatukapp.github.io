@@ -39,11 +39,12 @@ jobs:
 
       - name: Build web (release)
         # Root-domain hosting at salatukapp.web.app — base-href is '/'.
-        # --pwa-strategy=none disables the service worker entirely. Flutter's
-        # SW aggressively caches the app shell which has caused cache-
-        # poisoning bugs during rapid iteration. We trade offline-mode for
-        # reliable cache invalidation on every deploy.
-        run: flutter build web --release --base-href=/ --pwa-strategy=none
+        # --pwa-strategy=none: no service worker (avoids stale-cache bugs).
+        # --no-web-resources-cdn: bundle CanvasKit locally instead of fetching
+        #   the multi-MB WASM from gstatic.com at startup. Served same-origin
+        #   from Firebase's CDN, this cuts a cross-origin round trip and is far
+        #   faster/more reliable on slow links — the main cause of slow boot.
+        run: flutter build web --release --base-href=/ --pwa-strategy=none --no-web-resources-cdn
 
       - name: Deploy to Firebase Hosting (live)
         uses: FirebaseExtended/action-hosting-deploy@v0
